@@ -1,0 +1,474 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "adp-pr-review/1",
+  "title": "ADP PR Review",
+  "description": "The parsed shape of one pr-review-*.md file. The markdown file is the system of record; a consumer builds this object from its record grammar (references/review-file-template.md). Field values stay verbatim source text unless an enum constrains them.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "target",
+    "inspected",
+    "findings",
+    "quality_coverage",
+    "prior_findings",
+    "suppressed_prior_comments",
+    "notes",
+    "verdict"
+  ],
+  "properties": {
+    "schema": {
+      "const": "adp-pr-review/1"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task",
+        "tasks_on_branch",
+        "task_resolution",
+        "mode",
+        "pr",
+        "branch",
+        "head",
+        "base",
+        "round",
+        "previous_round",
+        "date"
+      ],
+      "properties": {
+        "task": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tasks_on_branch": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "task_resolution": {
+          "$ref": "#/$defs/basisLine"
+        },
+        "record_source": {
+          "enum": [
+            "GIT HEAD",
+            "WORKING TREE"
+          ],
+          "description": "Where the .adp/ record was read. Optional, because review files written before this field existed lack it."
+        },
+        "mode": {
+          "enum": [
+            "PR",
+            "LOCAL"
+          ]
+        },
+        "pr": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "head": {
+          "$ref": "#/$defs/sha"
+        },
+        "base": {
+          "$ref": "#/$defs/sha"
+        },
+        "round": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "previous_round": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        }
+      }
+    },
+    "inspected": {
+      "type": "array",
+      "description": "Rows of the Inspected table, in document order.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "item",
+          "value"
+        ],
+        "properties": {
+          "item": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "quality_coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "criterion",
+          "changed_surface",
+          "evidence_checked"
+        ],
+        "properties": {
+          "criterion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "changed_surface": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_checked": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "prior_findings": {
+      "type": "array",
+      "description": "Ledger lines under Prior Findings.",
+      "items": {
+        "$ref": "#/$defs/ledgerLine"
+      }
+    },
+    "suppressed_prior_comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "reason"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict",
+        "confidence",
+        "confidence_basis",
+        "counts",
+        "opened",
+        "closed",
+        "carried_open",
+        "summary"
+      ],
+      "properties": {
+        "verdict": {
+          "enum": [
+            "REQUEST_CHANGES",
+            "COMMENT",
+            "APPROVE"
+          ]
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "confidence_basis": {
+          "$ref": "#/$defs/basisLine"
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "must",
+            "should",
+            "question",
+            "nit"
+          ],
+          "properties": {
+            "must": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "should": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "question": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "nit": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "opened": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/findingId"
+          }
+        },
+        "closed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/findingId"
+          }
+        },
+        "carried_open": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/findingId"
+          }
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 250
+        }
+      }
+    }
+  },
+  "$defs": {
+    "findingId": {
+      "type": "string",
+      "pattern": "^PR-(COR|SEC|CON|TST|PERF|OPS|MNT|ADP)-[0-9]{3,}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,64}$"
+    },
+    "confidence": {
+      "enum": [
+        "HIGH",
+        "MEDIUM",
+        "LOW"
+      ]
+    },
+    "basisLine": {
+      "type": "string",
+      "description": "A basis word, an em dash, and one line of evidence.",
+      "pattern": "^(DIRECT EVIDENCE|INFERENCE FROM CONVENTION|DEVELOPER ASSERTION|BRANCH NAME|DIFF TOUCHES|LOG REFERENCE|BASE TASK)\\b"
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "line",
+        "side"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "side": {
+          "enum": [
+            "RIGHT",
+            "LEFT",
+            null
+          ]
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "severity",
+        "category",
+        "locations",
+        "claim",
+        "evidence",
+        "failure_scenario",
+        "suggested_fix",
+        "confidence",
+        "confidence_basis",
+        "verification",
+        "criterion",
+        "refs",
+        "created",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/findingId"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supersedes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/findingId"
+          }
+        },
+        "severity": {
+          "enum": [
+            "must",
+            "should",
+            "question",
+            "nit"
+          ]
+        },
+        "category": {
+          "enum": [
+            "COR",
+            "SEC",
+            "CON",
+            "TST",
+            "PERF",
+            "OPS",
+            "MNT",
+            "ADP"
+          ]
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/location"
+          }
+        },
+        "claim": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "string",
+          "minLength": 1
+        },
+        "failure_scenario": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "suggested_fix": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "confidence_basis": {
+          "$ref": "#/$defs/basisLine"
+        },
+        "verification": {
+          "type": "string",
+          "minLength": 1
+        },
+        "criterion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "later_record": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A log section written after the head that answers part of this finding, and the part it leaves open. Absent otherwise."
+        },
+        "created": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "description": "The entry's own Status line. It stays OPEN; a ledger line records the disposition.",
+          "enum": [
+            "OPEN"
+          ]
+        },
+        "disposition": {
+          "description": "Derived by a consumer from the first ledger line for this id in the task's review files or audit-log pointer. Absent while the finding is OPEN.",
+          "$ref": "#/$defs/ledgerLine"
+        }
+      }
+    },
+    "ledgerLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "closed",
+        "outcome",
+        "note"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/findingId"
+        },
+        "closed": {
+          "$ref": "#/$defs/date"
+        },
+        "outcome": {
+          "enum": [
+            "RESOLVED",
+            "REFUTED",
+            "ACCEPTED"
+          ]
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

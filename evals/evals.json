@@ -1,0 +1,196 @@
+{
+  "skill_name": "prreview",
+  "evals": [
+    {
+      "id": 1,
+      "name": "branch-single-task",
+      "prompt": "review my branch before i open the PR",
+      "expected_output": "Branch mode on lgr-01-page-window. One review file at .adp/LGR-01-page-window/pr-review-local-<YYYYMMDD>-r1.md in card grammar, with a must COR finding for the off-by-one slice in page() (it returns size + 1 items), a must ADP-02 finding for the absent 'if size <= 0: raise ValueError' anchor, and a must ADP-06 finding for LOW DL-002 missing from Mandatory Review Items. Verdict REQUEST_CHANGES. A 'Review findings — local round 1' pointer is appended to the task audit log. Terminal output is a summary line of 250 characters or fewer plus the file path.",
+      "files": [
+        "evals/fixtures/build_fixtures.py branch-single-task"
+      ],
+      "assertions": [
+        {
+          "id": "file-path",
+          "text": "Exactly one review file exists, at .adp/LGR-01-page-window/pr-review-local-<YYYYMMDD>-r1.md"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the review file path, ignoring a trailing session marker line"
+        },
+        {
+          "id": "card-grammar",
+          "text": "Every finding has a '### [PR-<CAT>-<NNN>] title' heading and all 14 required fields, parsed by the ADP parser"
+        },
+        {
+          "id": "target-block",
+          "text": "The Review Target block names Mode LOCAL, Task LGR-01-page-window, Round 1, and Task resolution BRANCH NAME"
+        },
+        {
+          "id": "finds-off-by-one",
+          "text": "A must finding locates the page() slice in src/ledger.py and states that a page holds size + 1 items"
+        },
+        {
+          "id": "finds-adp-02",
+          "text": "An ADP-category finding cites ADP-02 for the absent size guard anchor"
+        },
+        {
+          "id": "finds-adp-06",
+          "text": "An ADP-category finding cites ADP-06 and DL-002"
+        },
+        {
+          "id": "verdict",
+          "text": "The Review Verdict is REQUEST_CHANGES and its counts match the findings"
+        },
+        {
+          "id": "tests-recorded",
+          "text": "The Inspected table records the test command with a pass count"
+        },
+        {
+          "id": "pointer",
+          "text": "The task audit log ends with a '## Review findings — local round 1 (' section naming the review file"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "multi-task-base",
+      "prompt": "can you run a prreview on this branch? it bundles a couple of the csv tasks together",
+      "expected_output": "Branch feature/batch-work matches no task directory by name. The diff touches LGR-02-csv-export (first commit) and LGR-03-csv-escape (second commit), so the base task is LGR-02-csv-export. The review file lands there, Tasks on branch names LGR-03-csv-escape, Task resolution is BASE TASK. A COR finding flags that a value holding a double quote is not escaped, so the CSV is malformed under RFC 4180.",
+      "files": [
+        "evals/fixtures/build_fixtures.py multi-task-base"
+      ],
+      "assertions": [
+        {
+          "id": "base-task-file",
+          "text": "The review file is in .adp/LGR-02-csv-export/ and none is in .adp/LGR-03-csv-escape/"
+        },
+        {
+          "id": "tasks-on-branch",
+          "text": "Tasks on branch names LGR-03-csv-escape"
+        },
+        {
+          "id": "resolution-basis",
+          "text": "Task resolution starts with BASE TASK"
+        },
+        {
+          "id": "finds-quote-escape",
+          "text": "A finding states that a value containing a double quote is not escaped"
+        },
+        {
+          "id": "pointer-base-only",
+          "text": "Only the LGR-02-csv-export audit log gains a Review findings pointer"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the review file path, ignoring a trailing session marker line"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "re-review-round-2",
+      "prompt": "I pushed fixes for the last review round. re-review the branch please",
+      "expected_output": "Round 2 for LGR-04-balance. A new file pr-review-local-<YYYYMMDD>-r2.md names the r1 file as Previous round. Prior Findings has '- **PR-COR-001 CLOSED <date> → RESOLVED.**'. The new overdraft() bug (compares with limit, not -limit) becomes PR-COR-002, never a second PR-COR-001. The r1 file is unchanged.",
+      "files": [
+        "evals/fixtures/build_fixtures.py re-review-round-2"
+      ],
+      "assertions": [
+        {
+          "id": "round-2-file",
+          "text": "A review file pr-review-local-<YYYYMMDD>-r2.md exists with Round 2 and Previous round naming the r1 file"
+        },
+        {
+          "id": "ledger-resolved",
+          "text": "Prior Findings holds a character-exact '- **PR-COR-001 CLOSED <YYYY-MM-DD> → RESOLVED.**' line"
+        },
+        {
+          "id": "id-continuity",
+          "text": "The new overdraft finding is PR-COR-002 and the r2 file has no PR-COR-001 heading"
+        },
+        {
+          "id": "finds-overdraft",
+          "text": "A finding states that overdraft compares the balance with limit instead of -limit"
+        },
+        {
+          "id": "r1-immutable",
+          "text": "The r1 review file is byte-identical to the fixture"
+        },
+        {
+          "id": "closed-field",
+          "text": "The verdict's Closed field lists PR-COR-001"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the review file path, ignoring a trailing session marker line"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "ambiguous-placement",
+      "prompt": "review the wip branch",
+      "expected_output": "Branch wip matches no task directory and its diff touches no .adp/ directory, while two unrelated task directories exist. No rule matches any directory, so the skill says that no ADP task covers the change, recommends opening one with the auditable-dev-protocol skill, lists the two existing tasks, asks how to proceed, and writes no review file.",
+      "files": [
+        "evals/fixtures/build_fixtures.py ambiguous-placement"
+      ],
+      "assertions": [
+        {
+          "id": "no-file",
+          "text": "No pr-review-*.md file exists anywhere under .adp/"
+        },
+        {
+          "id": "logs-untouched",
+          "text": "No audit log changed"
+        },
+        {
+          "id": "asks",
+          "text": "The reply ends with a question asking which task the review belongs to, names both candidate tasks, and contains no review findings"
+        },
+        {
+          "id": "no-task-cause",
+          "text": "The reply says that no ADP task covers the change and recommends opening one with the auditable-dev-protocol skill"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "untracked-adp",
+      "prompt": "please review the feature/rounding branch before I push it",
+      "expected_output": "The project gitignores .adp/, so no diff shows it and no commit holds it. The record source is WORKING TREE. The branch name matches no directory, and only 20261002-LGR-07-cents/audit-log.md names the branch in its run-start line, so Task resolution is LOG REFERENCE. The review file lands in .adp/20261002-LGR-07-cents/, and a COR finding flags that int() truncates the float product, so to_cents(0.29) returns 28.",
+      "files": [
+        "evals/fixtures/build_fixtures.py untracked-adp"
+      ],
+      "assertions": [
+        {
+          "id": "log-ref-file",
+          "text": "The review file is in .adp/20261002-LGR-07-cents/ and none is in .adp/20261001-LGR-08-reports/"
+        },
+        {
+          "id": "record-source",
+          "text": "The Review Target block says Record source WORKING TREE"
+        },
+        {
+          "id": "resolution-basis",
+          "text": "Task resolution starts with LOG REFERENCE"
+        },
+        {
+          "id": "finds-truncation",
+          "text": "A finding states that to_cents truncates, for example that 0.29 becomes 28 cents"
+        },
+        {
+          "id": "pointer",
+          "text": "The LGR-07 audit log ends with a '## Review findings — local round 1 (' section"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the review file path, ignoring a trailing session marker line"
+        }
+      ]
+    }
+  ]
+}
