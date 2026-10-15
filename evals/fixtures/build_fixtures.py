@@ -464,6 +464,122 @@ def fee(amount, rate):
                 "the missing test until the billing tests land in LGR-10.\n")
 
 
+R1_REFUTE_REVIEW = """
+# PR Review — local round 1 · LGR-11-clamp
+
+## Review Target
+- **Schema:** adp-pr-review/1
+- **Task:** LGR-11-clamp
+- **Tasks on branch:** —
+- **Task resolution:** BRANCH NAME — the branch equals the directory name in lowercase.
+- **Mode:** LOCAL
+- **PR:** —
+- **Branch:** lgr-11-clamp → main
+- **Head:** {head}
+- **Base:** {base}
+- **Round:** 1
+- **Previous round:** —
+- **Date:** 2026-10-12
+
+## Findings
+
+### [PR-COR-001] clamp does not bound a negative amount
+- **Severity:** should
+- **Category:** COR — Correctness
+- **Location:** `src/ledger.py:11` (RIGHT)
+- **Claim:** `min(amount, limit)` caps only the high side, so a negative amount below `-limit` passes through.
+- **Evidence:** `return max(-limit, min(amount, limit))` at `src/ledger.py:11`.
+- **Failure scenario:** `clamp(-500, 100)` returns -500, not -100.
+- **Suggested fix:** `clamp` also bounds the low side. A test asserts `clamp(-500, 100) == -100`.
+- **Confidence:** MEDIUM
+- **Confidence basis:** INFERENCE FROM CONVENTION — I read the line and did not run it.
+- **Verification:** Read `src/ledger.py:11`.
+- **Criterion:** correctness
+- **Refs:** —
+- **Created:** 2026-10-12, round 1
+- **Status:** OPEN
+
+### [PR-CON-001] callers may pass a negative limit
+- **Severity:** question
+- **Category:** CON — Contract
+- **Location:** `src/ledger.py:9` (RIGHT)
+- **Claim:** Nothing states that `limit` is positive, and a negative limit returns `-limit` for every amount.
+- **Evidence:** `def clamp(amount, limit):` at `src/ledger.py:9`, and the docstring names no sign for `limit`.
+- **Failure scenario:** A caller passes `-1`, and `clamp(5, -1)` returns 1.
+- **Suggested fix:** The docstring or DL-001 states that `limit` is positive. The developer names what callers pass.
+- **Confidence:** MEDIUM
+- **Confidence basis:** INFERENCE FROM CONVENTION — no caller exists in the diff.
+- **Verification:** `grep -rn "clamp(" src tests` found no caller.
+- **Criterion:** contract
+- **Refs:** DL-001
+- **Created:** 2026-10-12, round 1
+- **Status:** OPEN
+
+### [PR-TST-001] clamp has no test
+- **Severity:** should
+- **Category:** TST — Tests
+- **Location:** `tests/test_ledger.py`
+- **Claim:** No test calls `clamp`, so a change to its bounds passes the suite.
+- **Evidence:** `grep -n "clamp" tests/test_ledger.py` found no match.
+- **Failure scenario:** A later edit makes `clamp` return `amount`, and the tests still pass.
+- **Suggested fix:** A test asserts `clamp` above, inside, and below the range.
+- **Confidence:** HIGH
+- **Confidence basis:** DIRECT EVIDENCE — I read the test file.
+- **Verification:** `grep -n "clamp" tests/test_ledger.py` exited 1.
+- **Criterion:** tests
+- **Refs:** —
+- **Created:** 2026-10-12, round 1
+- **Status:** OPEN
+
+## Review Verdict
+- **Verdict:** COMMENT
+- **Confidence:** MEDIUM
+- **Confidence basis:** INFERENCE FROM CONVENTION — I read the diff and ran the tests, and I did not run `clamp`.
+- **Counts:** must 0 / should 2 / question 1 / nit 0
+- **Opened:** PR-COR-001, PR-CON-001, PR-TST-001
+- **Closed:** —
+- **Carried open:** —
+- **Summary:** COMMENT. 0 must, 2 should, 1 question, 0 nit. PR-COR-001: clamp does not bound a negative amount. Tests 1 pass, 0 fail.
+"""
+
+
+def build_refute_round(repo):
+    base_repo(repo)
+    git(repo, "checkout", "-q", "-b", "lgr-11-clamp")
+    task = "LGR-11-clamp"
+    # PR-COR-001 in the r1 file is wrong: max() bounds the low side, so clamp(-500, 100) is -100.
+    write(repo, "src/ledger.py", BASE_LEDGER + '''
+
+def clamp(amount, limit):
+    """Return the amount bounded to the range from -limit to limit."""
+    return max(-limit, min(amount, limit))
+''')
+    log = audit_log(task, "A caller gets an amount bounded by a limit.", "Payments need a cap.",
+                    dl(1, "Clamp with min and max", "`clamp` bounds the amount with `min` and `max`.", "HIGH",
+                       "DIRECT EVIDENCE — amounts are whole cents.", "Amounts are whole cents."),
+                    "| — | L | L | Rebuttal: trivial. | UNOBSERVABLE — trivial. | — |", "None.")
+    write(repo, f".adp/{task}/audit-log.md", log)
+    commit(repo, "Add clamp()", "2026-10-11T10:00:00")
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True).stdout.strip()
+    base = subprocess.run(["git", "rev-parse", "main"], cwd=repo, capture_output=True, text=True).stdout.strip()
+    write(repo, f".adp/{task}/pr-review-local-20261012-r1.md", R1_REFUTE_REVIEW.format(head=head, base=base))
+    pointer = f"""
+## Review findings — local round 1 (2026-10-12)
+- **Review file:** `.adp/{task}/pr-review-local-20261012-r1.md`
+- **Verdict:** COMMENT
+- **Counts:** must 0 / should 2 / question 1 / nit 0
+- **Opened:** PR-COR-001, PR-CON-001, PR-TST-001
+- **Closed:** —
+- **Head:** {head}
+"""
+    with open(os.path.join(repo, f".adp/{task}/audit-log.md"), "a", encoding="utf-8") as f:
+        f.write(pointer)
+    commit(repo, "Record prreview round 1", "2026-10-12T10:00:00")
+    # An uncommitted acceptance that names no person, so it must close nothing.
+    with open(os.path.join(repo, f".adp/{task}/audit-log.md"), "a", encoding="utf-8") as f:
+        f.write("- **PR-TST-001 CLOSED 2026-10-13 → ACCEPTED.** Accepted until the billing tests land in LGR-10.\n")
+
+
 def build_ambiguous(repo):
     base_repo(repo)
     for task in ("LGR-05-rounding", "LGR-06-currency"):
@@ -511,6 +627,9 @@ BUILDERS = {
     "ambiguous-placement": build_ambiguous,
     "untracked-adp": build_untracked_adp,
     "response-round-2": build_response_round,
+    "response-refute-round-2": build_refute_round,
+    # Round 1 with a RESPONSE clause: the clause names no OPEN finding, so it changes nothing.
+    "response-round-1": build_branch_single_task,
 }
 
 if __name__ == "__main__":

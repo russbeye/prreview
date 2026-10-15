@@ -276,9 +276,94 @@ def grade_response_round(run):
     return res
 
 
+def grade_refute_round(run):
+    res = {}
+    task = os.path.join(run, "repo", ".adp", "LGR-11-clamp")
+    r2 = glob.glob(os.path.join(task, "pr-review-*-r2.md"))
+    keys = ("round-2-file", "responses-verbatim", "should-refuted-verified", "question-carried",
+            "nameless-not-accepted", "verdict-comment", "summary-tail")
+    if not r2:
+        for k in keys:
+            res[k] = (False, f"no r2 file; files: {os.listdir(task)}")
+    else:
+        d = parse_review(r2[0])
+        t = d["sections"].get("Review Target", {})
+        res["round-2-file"] = (bool(re.search(r"pr-review-local-\d{8}-r2\.md$", r2[0])) and t.get("Round") == "2"
+                               and "pr-review-local-20261012-r1.md" in t.get("Previous round", ""),
+                               f"{os.path.basename(r2[0])}; Round={t.get('Round')!r}; Previous round={t.get('Previous round')!r}")
+        m = re.search(r"^## Developer Responses\n(.*?)(?=^## |\Z)", d["text"], re.M | re.S)
+        rows = [l for l in (m.group(1) if m else "").splitlines() if l.startswith("|")]
+        cor = [l for l in rows if "PR-COR-001" in l and "bounds the low side" in l]
+        con = [l for l in rows if "PR-CON-001" in l and "billing team" in l]
+        res["responses-verbatim"] = (bool(cor and con), f"section {'found' if m else 'missing'}; rows: {[l[:90] for l in rows]}")
+        lines = list(LEDGER.finditer(d["text"]))
+        by = lambda i: [x for x in lines if x.group(1) == i]
+        full = lambda x: d["text"][x.start():].splitlines()[0]
+        # The quoted RESPONSE holds no command, so a command or a line read in the note is the reviewer's own check.
+        ref = [full(x) for x in by("PR-COR-001") if x.group(3) == "REFUTED"]
+        ok = any(re.search(r"python3|grep|src/ledger\.py:\d+", l) for l in ref)
+        res["should-refuted-verified"] = (ok, f"PR-COR-001 REFUTED lines: {[l[:200] for l in ref] or 'none'}")
+        v = d["sections"].get("Review Verdict", {})
+        carried, nd = v.get("Carried open", ""), v.get("Needs developer", "")
+        res["question-carried"] = (not by("PR-CON-001") and "PR-CON-001" in carried and "PR-CON-001" in nd,
+                                   f"PR-CON-001 lines: {[x.group(0) for x in by('PR-CON-001')] or 'none'}; Carried open={carried!r}; Needs developer={nd!r}")
+        acc = [x.group(0) for x in by("PR-TST-001") if x.group(3) == "ACCEPTED"]
+        res["nameless-not-accepted"] = (not acc and "PR-TST-001" in carried and "PR-TST-001" in nd,
+                                        f"PR-TST-001 ACCEPTED lines: {acc or 'none'}; Carried open={carried!r}; Needs developer={nd!r}")
+        sev = {f["head"][1:].split("]")[0]: f["fields"].get("Severity") for f in parse_review(os.path.join(task, "pr-review-local-20261012-r1.md"))["findings"]}
+        sev.update({f["head"][1:].split("]")[0]: f["fields"].get("Severity") for f in d["findings"]})
+        open_ids = [f["head"][1:].split("]")[0] for f in d["findings"]] + re.findall(r"PR-[A-Z]+-\d{3}", carried)
+        counts = {k: sum(1 for i in open_ids if sev.get(i) == k) for k in ("must", "should", "question", "nit")}
+        want = "must {must} / should {should} / question {question} / nit {nit}".format(**counts)
+        res["verdict-comment"] = (v.get("Verdict") == "COMMENT" and v.get("Counts", "").startswith(want),
+                                  f"Verdict={v.get('Verdict')!r}; Counts={v.get('Counts')!r}; computed {want!r}")
+        _, tl, _ = terminal_lines(run)
+        first = tl[0] if tl else ""
+        tail = re.search(r"Needs developer: (.*?)\.\s*$", first)
+        ids = set(re.findall(r"PR-[A-Z]+-\d{3}", tail.group(1))) if tail else set()
+        res["summary-tail"] = ({"PR-CON-001", "PR-TST-001"} <= ids and len(first) <= 250, f"{len(first)} chars: {first[-90:]!r}")
+    acc = []
+    for f in glob.glob(os.path.join(run, "repo", ".adp", "**", "*.md"), recursive=True):
+        acc += [f"{rel(run, f)}: {x.group(0)}" for x in LEDGER.finditer(open(f, encoding="utf-8").read()) if x.group(3) == "ACCEPTED"]
+    res["no-agent-accept"] = (len(acc) == 1 and acc[0].startswith(".adp/LGR-11-clamp/audit-log.md"), f"ACCEPTED lines: {acc or 'none'}")
+    r = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", ".adp/LGR-11-clamp/pr-review-local-20261012-r1.md"],
+                       cwd=os.path.join(run, "repo"))
+    res["r1-immutable"] = (r.returncode == 0, "r1 unchanged against the fixture commit" if r.returncode == 0 else "r1 differs from the fixture commit")
+    res["no-code-edits"] = no_code_edits(run)
+    res["terminal-two-lines"] = check_terminal(run, {"round": 2})
+    return res
+
+
+def grade_response_round_1(run):
+    res = {}
+    files = reviews(run)
+    pat = re.compile(r"\.adp/LGR-01-page-window/pr-review-local-\d{8}-r1\.md$")
+    res["file-path"] = (len(files) == 1 and bool(pat.search(files[0])), f"review files: {[rel(run, f) for f in files]}")
+    if not files:
+        for k in ("finds-off-by-one", "response-in-notes", "not-applied", "verdict-request-changes"):
+            res[k] = (False, "no review file")
+    else:
+        d = parse_review(files[0])
+        fs = find(d, lambda f: f["fields"].get("Severity") == "must" and "ledger.py" in f["fields"].get("Location", "")
+                  and re.search(r"size \+ 1|\+ 1|one extra|extra item|size\+1|4 items|four items", json.dumps(f["fields"]), re.I))
+        res["finds-off-by-one"] = (bool(fs), summarize(fs))
+        m = re.search(r"^## Notes\n(.*?)(?=^## |\Z)", d["text"], re.M | re.S)
+        notes = m.group(1) if m else ""
+        res["response-in-notes"] = ("PR-COR-001" in notes and "page is correct" in notes, f"Notes {'found' if m else 'missing'}: {notes.strip()[:200]!r}")
+        led = [x.group(0) for x in LEDGER.finditer(d["text"])]
+        dr = bool(re.search(r"^## Developer Responses", d["text"], re.M))
+        res["not-applied"] = (not dr and not led, f"Developer Responses section={dr}; ledger lines: {led or 'none'}")
+        v = d["sections"].get("Review Verdict", {})
+        res["verdict-request-changes"] = (v.get("Verdict") == "REQUEST_CHANGES", f"Verdict={v.get('Verdict')!r}")
+    res["no-code-edits"] = no_code_edits(run)
+    res["terminal-two-lines"] = check_terminal(run, {"round": 1})
+    return res
+
+
 GRADERS = {"branch-single-task": grade_branch_single_task, "multi-task-base": grade_multi_task_base,
            "re-review-round-2": grade_re_review, "ambiguous-placement": grade_ambiguous,
-           "untracked-adp": grade_untracked_adp, "response-round-2": grade_response_round}
+           "untracked-adp": grade_untracked_adp, "response-round-2": grade_response_round,
+           "response-refute-round-2": grade_refute_round, "response-round-1": grade_response_round_1}
 
 
 def main(iteration):

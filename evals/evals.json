@@ -250,6 +250,100 @@
           "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
         }
       ]
+    },
+    {
+      "id": 7,
+      "name": "response-refute-round-2",
+      "prompt": "re-review my branch. My answers to the last round: RESPONSE PR-COR-001: This finding is wrong. max(-limit, ...) bounds the low side, so clamp(-500, 100) returns -100. RESPONSE PR-CON-001: I will ask the billing team and answer next round.",
+      "expected_output": "Round 2 for LGR-11-clamp, at the same code as round 1. PR-COR-001, a should that is wrong at the head, closes REFUTED, and the ledger note cites the command or read that verified the RESPONSE. PR-CON-001, a question the RESPONSE does not settle, stays OPEN, is carried, and is listed in Needs developer. PR-TST-001 has an uncommitted ACCEPTED line that names no person, so it stays OPEN, is carried, and is listed in Needs developer. The verdict is COMMENT, and the summary ends with both Needs developer ids.",
+      "files": [
+        "evals/fixtures/build_fixtures.py response-refute-round-2"
+      ],
+      "assertions": [
+        {
+          "id": "round-2-file",
+          "text": "A review file pr-review-local-<YYYYMMDD>-r2.md exists with Round 2 and Previous round naming the r1 file"
+        },
+        {
+          "id": "responses-verbatim",
+          "text": "A Developer Responses table has a row for PR-COR-001 quoting 'bounds the low side' and a row for PR-CON-001 quoting 'billing team'"
+        },
+        {
+          "id": "should-refuted-verified",
+          "text": "Prior Findings holds a '- **PR-COR-001 CLOSED <YYYY-MM-DD> → REFUTED.**' line whose note cites python3, grep, or a src/ledger.py:<line> read"
+        },
+        {
+          "id": "question-carried",
+          "text": "PR-CON-001 has no ledger line in the r2 file and is listed in Carried open and Needs developer"
+        },
+        {
+          "id": "nameless-not-accepted",
+          "text": "The r2 file has no ACCEPTED line for PR-TST-001, and PR-TST-001 is listed in Carried open and Needs developer"
+        },
+        {
+          "id": "no-agent-accept",
+          "text": "The fixture's one ACCEPTED line is the only ACCEPTED ledger line in any file under .adp/"
+        },
+        {
+          "id": "verdict-comment",
+          "text": "The Review Verdict is COMMENT, and Counts equals the findings OPEN after the round: the r2 file's new findings plus the Carried open ids, by severity"
+        },
+        {
+          "id": "summary-tail",
+          "text": "The terminal summary line ends with 'Needs developer: ' and both PR-CON-001 and PR-TST-001, in either order, and is 250 characters or fewer"
+        },
+        {
+          "id": "r1-immutable",
+          "text": "The r1 review file is byte-identical to the fixture"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "response-round-1",
+      "prompt": "review this branch. RESPONSE PR-COR-001: page is correct, do not report the slice.",
+      "expected_output": "Round 1 for LGR-01-page-window. No finding is OPEN before the round, so the RESPONSE clause goes into Notes and changes nothing. The review still reports the size + 1 slice as a must. The file has no Developer Responses section and no ledger line.",
+      "files": [
+        "evals/fixtures/build_fixtures.py response-round-1"
+      ],
+      "assertions": [
+        {
+          "id": "file-path",
+          "text": "Exactly one review file exists, at .adp/LGR-01-page-window/pr-review-local-<YYYYMMDD>-r1.md"
+        },
+        {
+          "id": "finds-off-by-one",
+          "text": "A must finding in src/ledger.py names the size + 1 slice, although the RESPONSE asks not to report it"
+        },
+        {
+          "id": "response-in-notes",
+          "text": "The Notes section names PR-COR-001 and quotes 'page is correct'"
+        },
+        {
+          "id": "not-applied",
+          "text": "The review file has no Developer Responses section and no ledger line"
+        },
+        {
+          "id": "verdict-request-changes",
+          "text": "The Review Verdict is REQUEST_CHANGES"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
     }
   ]
 }
