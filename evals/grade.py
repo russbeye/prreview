@@ -219,9 +219,66 @@ def grade_untracked_adp(run):
     return res
 
 
+def grade_response_round(run):
+    res = {}
+    task = os.path.join(run, "repo", ".adp", "LGR-09-fees")
+    r2 = glob.glob(os.path.join(task, "pr-review-*-r2.md"))
+    keys = ("round-2-file", "responses-verbatim", "question-refuted", "should-carried", "needs-developer",
+            "human-accepted", "verdict-comment", "summary-tail")
+    if not r2:
+        for k in keys:
+            res[k] = (False, f"no r2 file; files: {os.listdir(task)}")
+    else:
+        d = parse_review(r2[0])
+        t = d["sections"].get("Review Target", {})
+        res["round-2-file"] = (bool(re.search(r"pr-review-local-\d{8}-r2\.md$", r2[0])) and t.get("Round") == "2"
+                               and "pr-review-local-20261012-r1.md" in t.get("Previous round", ""),
+                               f"{os.path.basename(r2[0])}; Round={t.get('Round')!r}; Previous round={t.get('Previous round')!r}")
+        m = re.search(r"^## Developer Responses\n(.*?)(?=^## |\Z)", d["text"], re.M | re.S)
+        rows = [l for l in (m.group(1) if m else "").splitlines() if l.startswith("|")]
+        cor = [l for l in rows if "PR-COR-001" in l and "banker's rounding" in l]
+        con = [l for l in rows if "PR-CON-001" in l and "never a percent" in l]
+        res["responses-verbatim"] = (bool(cor and con), f"section {'found' if m else 'missing'}; rows: {[l[:90] for l in rows]}")
+        lines = list(LEDGER.finditer(d["text"]))
+        by = lambda i: [x for x in lines if x.group(1) == i]
+        res["question-refuted"] = (any(x.group(3) == "REFUTED" for x in by("PR-CON-001")), f"PR-CON-001 lines: {[x.group(0) for x in by('PR-CON-001')] or 'none'}")
+        v = d["sections"].get("Review Verdict", {})
+        res["should-carried"] = (not by("PR-COR-001") and "PR-COR-001" in v.get("Carried open", ""),
+                                 f"PR-COR-001 lines: {[x.group(0) for x in by('PR-COR-001')] or 'none'}; Carried open={v.get('Carried open')!r}")
+        res["needs-developer"] = ("PR-COR-001" in v.get("Needs developer", ""), f"Needs developer={v.get('Needs developer')!r}")
+        acc = [x for x in by("PR-TST-001") if x.group(3) == "ACCEPTED"]
+        acc_line = d["text"][acc[0].start():].splitlines()[0] if acc else ""
+        res["human-accepted"] = (bool(acc) and "Dana Reyes" in acc_line and "PR-TST-001" not in v.get("Carried open", ""),
+                                 f"line: {acc_line[:120] or 'none'}; Carried open={v.get('Carried open')!r}")
+        # OPEN after the round: the r2 file's new findings plus the carried ids, whose severity is in r1.
+        sev = {f["head"][1:].split("]")[0]: f["fields"].get("Severity") for f in parse_review(os.path.join(task, "pr-review-local-20261012-r1.md"))["findings"]}
+        sev.update({f["head"][1:].split("]")[0]: f["fields"].get("Severity") for f in d["findings"]})
+        open_ids = [f["head"][1:].split("]")[0] for f in d["findings"]] + re.findall(r"PR-[A-Z]+-\d{3}", v.get("Carried open", ""))
+        counts = {k: sum(1 for i in open_ids if sev.get(i) == k) for k in ("must", "should", "question", "nit")}
+        want = "must {must} / should {should} / question {question} / nit {nit}".format(**counts)
+        res["verdict-comment"] = (v.get("Verdict") == "COMMENT" and v.get("Counts", "").startswith(want),
+                                  f"Verdict={v.get('Verdict')!r}; Counts={v.get('Counts')!r}; computed {want!r}")
+        _, tl, _ = terminal_lines(run)
+        first = tl[0] if tl else ""
+        res["summary-tail"] = (bool(re.search(r"Needs developer: PR-COR-001\.\s*$", first)) and len(first) <= 250,
+                               f"{len(first)} chars: {first[-80:]!r}")
+    bad = []
+    for f in glob.glob(os.path.join(run, "repo", ".adp", "**", "*.md"), recursive=True):
+        for x in LEDGER.finditer(open(f, encoding="utf-8").read()):
+            if x.group(3) == "ACCEPTED" and x.group(1) in ("PR-COR-001", "PR-CON-001"):
+                bad.append(f"{rel(run, f)}: {x.group(0)}")
+    res["no-agent-accept"] = (not bad, f"agent ACCEPTED lines: {bad or 'none'}")
+    r = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", ".adp/LGR-09-fees/pr-review-local-20261012-r1.md"],
+                       cwd=os.path.join(run, "repo"))
+    res["r1-immutable"] = (r.returncode == 0, "r1 unchanged against the fixture commit" if r.returncode == 0 else "r1 differs from the fixture commit")
+    res["no-code-edits"] = no_code_edits(run)
+    res["terminal-two-lines"] = check_terminal(run, {"round": 2})
+    return res
+
+
 GRADERS = {"branch-single-task": grade_branch_single_task, "multi-task-base": grade_multi_task_base,
            "re-review-round-2": grade_re_review, "ambiguous-placement": grade_ambiguous,
-           "untracked-adp": grade_untracked_adp}
+           "untracked-adp": grade_untracked_adp, "response-round-2": grade_response_round}
 
 
 def main(iteration):

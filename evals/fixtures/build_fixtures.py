@@ -347,6 +347,123 @@ if __name__'''))
     commit(repo, "Sum every amount and add overdraft()", "2026-10-11T10:00:00")
 
 
+R1_RESPONSE_REVIEW = """
+# PR Review — local round 1 · LGR-09-fees
+
+## Review Target
+- **Schema:** adp-pr-review/1
+- **Task:** LGR-09-fees
+- **Tasks on branch:** —
+- **Task resolution:** BRANCH NAME — the branch equals the directory name in lowercase.
+- **Mode:** LOCAL
+- **PR:** —
+- **Branch:** lgr-09-fees → main
+- **Head:** {head}
+- **Base:** {base}
+- **Round:** 1
+- **Previous round:** —
+- **Date:** 2026-10-12
+
+## Findings
+
+### [PR-COR-001] fee rounds a half cent down to even
+- **Severity:** should
+- **Category:** COR — Correctness
+- **Location:** `src/ledger.py:12` (RIGHT)
+- **Claim:** `fee` uses `round`, which rounds a half to the nearest even number, so a fee of 2.5 cents becomes 2.
+- **Evidence:** `return round(amount * rate)` at `src/ledger.py:12`.
+- **Failure scenario:** `fee(250, 0.01)` returns 2, not 3.
+- **Suggested fix:** `fee` rounds a half up. A test asserts `fee(250, 0.01) == 3`.
+- **Confidence:** HIGH
+- **Confidence basis:** DIRECT EVIDENCE — I ran the call and read the result.
+- **Verification:** `python3 -c "from src.ledger import fee; print(fee(250, 0.01))"` printed 2.
+- **Criterion:** correctness
+- **Refs:** —
+- **Created:** 2026-10-12, round 1
+- **Status:** OPEN
+
+### [PR-CON-001] the unit of rate is not stated
+- **Severity:** question
+- **Category:** CON — Contract
+- **Location:** `src/ledger.py:10` (RIGHT)
+- **Claim:** Nothing states whether `rate` is a fraction such as 0.01 or a percent such as 1, and a percent would charge 100 times the fee.
+- **Evidence:** `def fee(amount, rate):` at `src/ledger.py:10`, and the docstring names no unit.
+- **Failure scenario:** A caller passes `1` for one percent, and `fee(250, 1)` returns 250.
+- **Suggested fix:** The docstring or DL-001 names the unit of `rate`. The developer names the unit.
+- **Confidence:** MEDIUM
+- **Confidence basis:** INFERENCE FROM CONVENTION — no caller exists in the diff.
+- **Verification:** `grep -rn "fee(" src tests` found no caller.
+- **Criterion:** contract
+- **Refs:** DL-001
+- **Created:** 2026-10-12, round 1
+- **Status:** OPEN
+
+### [PR-TST-001] fee has no test
+- **Severity:** should
+- **Category:** TST — Tests
+- **Location:** `tests/test_ledger.py`
+- **Claim:** No test calls `fee`, so a change to its rounding passes the suite.
+- **Evidence:** `grep -n "fee" tests/test_ledger.py` found no match.
+- **Failure scenario:** A later edit makes `fee` return 0, and the tests still pass.
+- **Suggested fix:** A test asserts `fee` for a whole-cent case and a half-cent case.
+- **Confidence:** HIGH
+- **Confidence basis:** DIRECT EVIDENCE — I read the test file.
+- **Verification:** `grep -n "fee" tests/test_ledger.py` exited 1.
+- **Criterion:** tests
+- **Refs:** —
+- **Created:** 2026-10-12, round 1
+- **Status:** OPEN
+
+## Review Verdict
+- **Verdict:** COMMENT
+- **Confidence:** HIGH
+- **Confidence basis:** DIRECT EVIDENCE — I read the diff and ran the tests.
+- **Counts:** must 0 / should 2 / question 1 / nit 0
+- **Opened:** PR-COR-001, PR-CON-001, PR-TST-001
+- **Closed:** —
+- **Carried open:** —
+- **Summary:** COMMENT. 0 must, 2 should, 1 question, 0 nit. PR-COR-001: fee rounds a half cent down to even. Tests 1 pass, 0 fail.
+"""
+
+
+def build_response_round(repo):
+    base_repo(repo)
+    git(repo, "checkout", "-q", "-b", "lgr-09-fees")
+    task = "LGR-09-fees"
+    write(repo, "src/ledger.py", BASE_LEDGER + '''
+
+def fee(amount, rate):
+    """Return the fee for an amount, in whole cents."""
+    return round(amount * rate)
+''')
+    log = audit_log(task, "A caller gets the fee for an amount.", "Payments need a fee.",
+                    dl(1, "Fee is a rounded product", "`fee` multiplies the amount by the rate and rounds.", "HIGH",
+                       "DIRECT EVIDENCE — amounts are whole cents.", "Amounts are whole cents."),
+                    "| — | L | L | Rebuttal: trivial. | UNOBSERVABLE — trivial. | — |", "None.")
+    write(repo, f".adp/{task}/audit-log.md", log)
+    commit(repo, "Add fee()", "2026-10-11T10:00:00")
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True).stdout.strip()
+    base = subprocess.run(["git", "rev-parse", "main"], cwd=repo, capture_output=True, text=True).stdout.strip()
+    write(repo, f".adp/{task}/pr-review-local-20261012-r1.md", R1_RESPONSE_REVIEW.format(head=head, base=base))
+    pointer = f"""
+## Review findings — local round 1 (2026-10-12)
+- **Review file:** `.adp/{task}/pr-review-local-20261012-r1.md`
+- **Verdict:** COMMENT
+- **Counts:** must 0 / should 2 / question 1 / nit 0
+- **Opened:** PR-COR-001, PR-CON-001, PR-TST-001
+- **Closed:** —
+- **Head:** {head}
+"""
+    with open(os.path.join(repo, f".adp/{task}/audit-log.md"), "a", encoding="utf-8") as f:
+        f.write(pointer)
+    commit(repo, "Record prreview round 1", "2026-10-12T10:00:00")
+    # The developer accepts PR-TST-001 by hand in the working tree and does not commit it, so the
+    # review must read the acceptance from the working-tree log under record source GIT HEAD.
+    with open(os.path.join(repo, f".adp/{task}/audit-log.md"), "a", encoding="utf-8") as f:
+        f.write("- **PR-TST-001 CLOSED 2026-10-13 → ACCEPTED.** Dana Reyes, the task owner, accepted "
+                "the missing test until the billing tests land in LGR-10.\n")
+
+
 def build_ambiguous(repo):
     base_repo(repo)
     for task in ("LGR-05-rounding", "LGR-06-currency"):
@@ -393,6 +510,7 @@ BUILDERS = {
     "re-review-round-2": build_re_review,
     "ambiguous-placement": build_ambiguous,
     "untracked-adp": build_untracked_adp,
+    "response-round-2": build_response_round,
 }
 
 if __name__ == "__main__":

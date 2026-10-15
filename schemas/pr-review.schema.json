@@ -149,6 +149,36 @@
         }
       }
     },
+    "developer_responses": {
+      "type": "array",
+      "description": "Rows of Developer Responses: each RESPONSE clause this round received, verbatim, and what it did. Absent in a round that received none.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "finding",
+          "response",
+          "outcome"
+        ],
+        "properties": {
+          "finding": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The PR-<CAT>-<NNN> id the RESPONSE named, as written."
+          },
+          "response": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The RESPONSE text, verbatim."
+          },
+          "outcome": {
+            "type": "string",
+            "minLength": 1,
+            "description": "REFUTED, SUPERSEDED by <id>, or CARRIED, with the reason."
+          }
+        }
+      }
+    },
     "prior_findings": {
       "type": "array",
       "description": "Ledger lines under Prior Findings.",
@@ -252,6 +282,13 @@
         },
         "carried_open": {
           "type": "array",
+          "items": {
+            "$ref": "#/$defs/findingId"
+          }
+        },
+        "needs_developer": {
+          "type": "array",
+          "description": "OPEN finding ids that only the developer can settle: a RESPONSE the reviewer could not verify, a request to accept or leave a should or must unfixed, or an ACCEPTED line that names no person. Absent or empty when none.",
           "items": {
             "$ref": "#/$defs/findingId"
           }

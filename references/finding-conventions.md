@@ -81,6 +81,12 @@ a ruling is recorded.
 - `COMMENT` when no `must` is OPEN and at least one `should` or `question` is OPEN.
 - `APPROVE` when only `nit` findings, or none, are OPEN.
 
+**Counts** gives the number of findings at each severity that are OPEN after this round: the
+findings this round opens plus the findings it carries open. A finding that closes this round, by
+any ledger line, is not counted. The verdict rule above reads the same set, so the counts always
+explain the verdict. The terminal summary prints the same numbers. In round 1, every finding is
+OPEN, so the counts are the findings in the file.
+
 The review confidence is the lowest of these: the confidence your material coverage supports, and
 MEDIUM when the tests did not run. Coverage is HIGH when you read every changed file's diff, the
 nearby contracts, the audit log, the guidance, and the prior comments. Coverage is MEDIUM when a

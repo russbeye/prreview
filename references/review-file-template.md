@@ -73,6 +73,13 @@ reader parses it.
 |-----------|-----------------|------------------|
 | ...       | ...             | ...              |
 
+## Developer Responses
+| Finding | Response | Outcome |
+|---------|----------|---------|
+| PR-<CAT>-<NNN> | <the RESPONSE text, verbatim> | REFUTED / SUPERSEDED by PR-<CAT>-<NNN> / CARRIED — <the reason> |
+
+[omit the section when the round received no RESPONSE clause]
+
 ## Prior Findings
 - **PR-<CAT>-<NNN> CLOSED <YYYY-MM-DD> → RESOLVED.** <what in the current head resolves it>
 - **PR-<CAT>-<NNN> CLOSED <YYYY-MM-DD> → REFUTED.** <the evidence that shows the claim was wrong>
@@ -98,6 +105,7 @@ reader parses it.
 - **Opened:** <finding ids opened this round> / —
 - **Closed:** <finding ids closed this round> / —
 - **Carried open:** <OPEN finding ids from earlier rounds> / —
+- **Needs developer:** <OPEN finding ids only the developer can settle> / —
 - **Summary:** <the same 250-character summary the terminal prints>
 ````
 
@@ -113,6 +121,8 @@ reader parses it.
 - **Evidence** quotes the code exactly in a code span. A line number is an advisory hint, as in
   ADP's `Implemented at` column.
 - **Refs** quotes Pre-Mortem failure-mode text verbatim, so a reader can search for it.
+- **Counts** in the Review Verdict counts the findings OPEN after this round: the round's new
+  findings plus the findings it carries open. See `finding-conventions.md` § "Verdict".
 
 ## The ledger lines
 

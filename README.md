@@ -49,6 +49,7 @@ Ask Claude in plain words, or use the slash command:
 | Review a pull request | "review PR 42" | `/prreview 42` |
 | Review it again after new commits | "re-review PR 42" | `/prreview 42` |
 | Review your branch before a PR exists | "review this branch" | `/prreview` |
+| Answer a finding from the last round | "re-review PR 42. RESPONSE PR-CON-001: rate is a fraction." | `/prreview 42 RESPONSE PR-CON-001: rate is a fraction.` |
 
 A PR URL works in place of the number. In branch mode, Claude compares your branch with the point
 where it left the default branch.
@@ -56,6 +57,71 @@ where it left the default branch.
 Each review belongs to one ADP task. Claude finds the task from your branch name or from the task
 folders your branch changes. When no task matches, or two tasks could own the review, Claude stops
 and asks you. It never guesses and never creates a task for you.
+
+### Answer a finding
+
+When you disagree with a finding, or you know the fact a `question` asks for, answer it in the next
+round. Start each answer with `RESPONSE` and the finding id. You can give several answers at once:
+
+```
+/prreview 42 RESPONSE PR-CON-001: rate is a fraction. billing.py:14 passes 0.01. RESPONSE PR-COR-002: the cache is per request, see app.py:30.
+```
+
+Claude records each answer word for word in the review file, then decides what it does:
+
+- A `question` closes on your answer when the answer settles it.
+- A `should` or `must` closes only when Claude checks your claim against the code and finds it
+  true. Your word alone does not close it.
+- An answer that asks Claude to accept a risk, or to leave a finding unfixed, closes nothing.
+  Claude lists the finding under **Needs developer**.
+
+### Accept a risk
+
+Only you can accept a risk, and you do it in the audit log, not in an answer. Under the round's
+`## Review findings` section in `.adp/<task>/audit-log.md`, add one line with your name:
+
+```
+- **PR-COR-001 CLOSED 2026-10-15 → ACCEPTED.** Dana Reyes accepted half-even rounding for fees.
+```
+
+The next round closes the finding. You do not need to commit the line first. A line without a
+person's name closes nothing.
+
+### Review in a loop
+
+Claude can run review rounds until the change passes. Each round runs in a fresh headless session,
+so one round cannot lean on the reasoning of the round before it.
+
+A headless round cannot ask you for permission, so the command gives it what a review needs up
+front:
+
+```bash
+claude -p "/prreview 42" --add-dir ~/.claude/skills/prreview --permission-mode acceptEdits --allowedTools "Read(~/.claude/skills/prreview/**)" "Bash(git:*)" "Bash(gh:*)" "Bash(ls:*)" "Bash(grep:*)" "Bash(find:*)" "Bash(head:*)" "Bash(tail:*)" "Bash(<test command>:*)" "Bash(<runtime>:*)"
+```
+
+Replace `42` with your PR number. Replace `<test command>` with your test command, such as
+`npm test`. Replace `<runtime>` with the program Claude uses to reproduce a bug, such as `python3`
+or `node`. With these rules, Claude can run your tests and short scripts in your project without
+asking, so use them only in a project you trust. Without them, the round stops and asks for
+permission that a headless session cannot get.
+
+Then paste this into Claude Code, with your filled-in command in place of `<command>`:
+
+```
+/goal Review the PR in rounds, at most 5. Run each round with this command: <command>
+Read the verdict on line 1 of its output, and the Confidence field under Review Verdict in the
+review file that line 2 names. Then:
+- APPROVE with HIGH confidence: stop. The review passed.
+- Line 1 ends with "Needs developer": stop and tell me which findings need me.
+- REQUEST_CHANGES: fix the open findings, commit, and run the next round.
+- COMMENT: fix the findings you agree with and commit. In the next round, add
+  RESPONSE <PR-ID>: <your answer and its evidence> to the command's prompt for each other open
+  finding.
+- APPROVE below HIGH confidence: read the Confidence basis, fix what lowered it, and run the next
+  round.
+Never write a ledger line in the audit log. Only I accept a risk.
+After round 5, stop and tell me where the review stands.
+```
 
 ## Read the output
 
@@ -66,9 +132,10 @@ REQUEST_CHANGES. 1 must, 2 should, 0 question, 1 nit. PR-SEC-003: token compare 
 .adp/ZUP-C1-ci-test-runner/pr-review-PR12-20261012-r2.md
 ```
 
-The first line gives the verdict, the number of findings at each severity, the most serious
-finding, and the test result. It is 250 characters or fewer. The second line is the path to the
-review file.
+The first line gives the verdict, the number of open findings at each severity, the most serious
+finding, and the test result. When a finding needs your decision, the line ends with
+`Needs developer:` and the finding ids. It is 250 characters or fewer. The second line is the path
+to the review file.
 
 ### Verdict
 
@@ -105,9 +172,10 @@ Claude writes one file per round, named `pr-review-PR<n>-<date>-r<round>.md` for
 | Inspected | What Claude read, and the test command with its pass, fail, and skip counts. |
 | Findings | One card per finding: severity, location, claim, evidence, failure scenario, suggested fix, and confidence. |
 | Quality Coverage | Each rule Claude checked the change against. |
+| Developer Responses | Each answer you sent, word for word, and what it did. |
 | Prior Findings | On a re-review, how each earlier finding closed. |
 | Notes | Limits of the review, and concerns that did not become findings. |
-| Review Verdict | The verdict, the counts, and the same summary the terminal printed. |
+| Review Verdict | The verdict, its confidence, the counts, the findings that need your decision, and the same summary the terminal printed. |
 
 Each finding states its confidence as HIGH, MEDIUM, or LOW, and says where that confidence comes
 from: evidence Claude saw, a convention in your code, or something you told it.

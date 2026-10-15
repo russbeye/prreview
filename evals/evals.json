@@ -191,6 +191,65 @@
           "text": "Terminal output is a summary line of 250 characters or fewer followed by the review file path, ignoring a trailing session marker line"
         }
       ]
+    },
+    {
+      "id": 6,
+      "name": "response-round-2",
+      "prompt": "re-review my branch. My answers to the last round: RESPONSE PR-COR-001: This is fine, we accept banker's rounding here, so leave fee as it is. RESPONSE PR-CON-001: rate is always a fraction such as 0.01, never a percent. The billing service passes 0.01.",
+      "expected_output": "Round 2 for LGR-09-fees, at the same code as round 1. Developer Responses records both RESPONSE clauses verbatim. PR-CON-001, a question, closes REFUTED on DEVELOPER ASSERTION. PR-COR-001, a should the response asks to leave unfixed, stays OPEN, is carried, and is listed in Needs developer, because a RESPONSE never accepts a risk. PR-TST-001 closes ACCEPTED from the uncommitted ledger line that names Dana Reyes in the working-tree audit log. The verdict is COMMENT, and the summary ends with 'Needs developer: PR-COR-001.'.",
+      "files": [
+        "evals/fixtures/build_fixtures.py response-round-2"
+      ],
+      "assertions": [
+        {
+          "id": "round-2-file",
+          "text": "A review file pr-review-local-<YYYYMMDD>-r2.md exists with Round 2 and Previous round naming the r1 file"
+        },
+        {
+          "id": "responses-verbatim",
+          "text": "A Developer Responses table has a row for PR-COR-001 quoting 'banker's rounding' and a row for PR-CON-001 quoting 'never a percent'"
+        },
+        {
+          "id": "question-refuted",
+          "text": "Prior Findings holds a character-exact '- **PR-CON-001 CLOSED <YYYY-MM-DD> → REFUTED.**' line"
+        },
+        {
+          "id": "should-carried",
+          "text": "PR-COR-001 has no ledger line in the r2 file and is listed in Carried open"
+        },
+        {
+          "id": "needs-developer",
+          "text": "The verdict's Needs developer field lists PR-COR-001"
+        },
+        {
+          "id": "human-accepted",
+          "text": "Prior Findings holds '- **PR-TST-001 CLOSED <YYYY-MM-DD> → ACCEPTED.**' naming Dana Reyes, and Carried open does not list PR-TST-001"
+        },
+        {
+          "id": "no-agent-accept",
+          "text": "No ACCEPTED ledger line for PR-COR-001 or PR-CON-001 exists in any file under .adp/"
+        },
+        {
+          "id": "verdict-comment",
+          "text": "The Review Verdict is COMMENT, and Counts equals the findings OPEN after the round: the r2 file's new findings plus the Carried open ids, by severity"
+        },
+        {
+          "id": "summary-tail",
+          "text": "The terminal summary line ends with 'Needs developer: PR-COR-001.' and is 250 characters or fewer"
+        },
+        {
+          "id": "r1-immutable",
+          "text": "The r1 review file is byte-identical to the fixture"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
     }
   ]
 }
