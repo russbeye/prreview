@@ -369,9 +369,9 @@ R1_RESPONSE_REVIEW = """
 ### [PR-COR-001] fee rounds a half cent down to even
 - **Severity:** should
 - **Category:** COR — Correctness
-- **Location:** `src/ledger.py:12` (RIGHT)
+- **Location:** `src/ledger.py:11` (RIGHT)
 - **Claim:** `fee` uses `round`, which rounds a half to the nearest even number, so a fee of 2.5 cents becomes 2.
-- **Evidence:** `return round(amount * rate)` at `src/ledger.py:12`.
+- **Evidence:** `return round(amount * rate)` at `src/ledger.py:11`.
 - **Failure scenario:** `fee(250, 0.01)` returns 2, not 3.
 - **Suggested fix:** `fee` rounds a half up. A test asserts `fee(250, 0.01) == 3`.
 - **Confidence:** HIGH
@@ -385,9 +385,9 @@ R1_RESPONSE_REVIEW = """
 ### [PR-CON-001] the unit of rate is not stated
 - **Severity:** question
 - **Category:** CON — Contract
-- **Location:** `src/ledger.py:10` (RIGHT)
+- **Location:** `src/ledger.py:9` (RIGHT)
 - **Claim:** Nothing states whether `rate` is a fraction such as 0.01 or a percent such as 1, and a percent would charge 100 times the fee.
-- **Evidence:** `def fee(amount, rate):` at `src/ledger.py:10`, and the docstring names no unit.
+- **Evidence:** `def fee(amount, rate):` at `src/ledger.py:9`, and the docstring names no unit.
 - **Failure scenario:** A caller passes `1` for one percent, and `fee(250, 1)` returns 250.
 - **Suggested fix:** The docstring or DL-001 names the unit of `rate`. The developer names the unit.
 - **Confidence:** MEDIUM
