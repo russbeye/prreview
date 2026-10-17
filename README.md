@@ -47,7 +47,9 @@ record in the same task folder.
    The first line is the verdict. The second line is the review file, which holds every finding
    in full.
 
-5. Fix the findings, commit, and run `/prreview 42` again. Repeat until the verdict is `APPROVE`.
+5. Fix the findings, commit, push, and run `/prreview 42` again. A pull request review reads the
+   head commit on GitHub, so it does not see a commit that you did not push. Repeat until the
+   verdict is `APPROVE`.
 
 ## Install
 
@@ -232,12 +234,12 @@ Read the verdict on line 1 of its output, and the Confidence field under Review 
 review file that line 2 names. Then:
 - APPROVE with HIGH confidence: stop. The review passed.
 - Line 1 ends with "Needs developer": stop and tell me which findings need me.
-- REQUEST_CHANGES: fix the open findings, commit, and run the next round.
-- COMMENT: fix the findings you agree with and commit. In the next round, add
+- REQUEST_CHANGES: fix the open findings, commit, push, and run the next round.
+- COMMENT: fix the findings you agree with, commit, and push. In the next round, add
   RESPONSE <PR-ID>: <your answer and its evidence> to the command's prompt for each other open
   finding.
-- APPROVE below HIGH confidence: read the Confidence basis, fix what lowered it, and run the next
-  round.
+- APPROVE below HIGH confidence: read the Confidence basis, fix what lowered it, commit, push,
+  and run the next round.
 Never write a ledger line in the audit log. Only I accept a risk.
 After round 5, stop and tell me where the review stands.
 ```
