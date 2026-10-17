@@ -238,15 +238,20 @@ review file that line 2 names. Then:
 - COMMENT: fix the findings you agree with, commit, and push. In the next round, add
   RESPONSE <PR-ID>: <your answer and its evidence> to the command's prompt for each other open
   finding.
-- APPROVE below HIGH confidence: read the Confidence basis, fix what lowered it, commit, push,
-  and run the next round.
+- APPROVE below HIGH confidence, and the only reason is that the tests did not run: stop. Tell me
+  the reason from the Tests row under Inspected. A change that no test covers, such as a docs-only
+  change, cannot reach HIGH.
+- APPROVE below HIGH confidence for any other reason: read the Confidence basis, fix what lowered
+  it, commit, push, and run the next round.
 Never write a ledger line in the audit log. Only I accept a risk.
 After round 5, stop and tell me where the review stands.
 ```
 
-The loop stops in one of three ways:
+The loop stops in one of four ways:
 
 - The review passes with `APPROVE` at HIGH confidence.
+- The review passes with `APPROVE` below HIGH confidence only because the tests did not run.
+  Claude tells you why they did not run.
 - A finding needs your decision. Claude names the finding ids.
 - Five rounds finish. Claude tells you where the review stands.
 
