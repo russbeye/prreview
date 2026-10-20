@@ -88,7 +88,41 @@ explain the verdict. The terminal summary prints the same numbers. In round 1, e
 OPEN, so the counts are the findings in the file.
 
 The review confidence is the lowest of these: the confidence your material coverage supports, and
-MEDIUM when the tests did not run. Coverage is HIGH when you read every changed file's diff, the
-nearby contracts, the audit log, the guidance, and the prior comments. Coverage is MEDIUM when a
-nearby contract or the prior comments were unavailable. Coverage is LOW when a key material did
-not load.
+MEDIUM when the tests did not run and the change is not docs only. Coverage is HIGH when you read
+every changed file's diff, the nearby contracts, the audit log, the guidance, and the prior
+comments. Coverage is MEDIUM when a nearby contract or the prior comments were unavailable.
+Coverage is LOW when a key material did not load.
+
+### Docs only
+
+A change is docs only when every changed file outside `.adp/` passes all three checks. Run the
+checks only when the tests did not run. One failed check keeps the MEDIUM cap.
+
+1. **Candidate.** The path matches `README*`, `CHANGELOG*`, `CONTRIBUTING*`, `LICENSE*`, or
+   `docs/**`, or a path in the quality profile's `documentation_paths`.
+2. **Not agent-read.** The file is not `SKILL.md`, `CLAUDE.md`, `AGENTS.md`, or a guidance file
+   from Step 4, and it is not under `references/`, `prompts/`, `templates/`, or `.claude/`. An
+   agent follows these files, so they are code, whatever the profile says.
+3. **No reader.** Run these commands from the repository root on `<head>`, the SHA from Step 1.
+   `git grep` searches only tracked files at that commit, so untracked folders never count.
+   - `git grep -nF -e '<path>' -e '<base name>' -e '<dir>' <head> -- ':!.adp'`, with one
+     `-e '<dir>'` for every directory on the file's path.
+   - `git grep -nF -e 'include_str!' -e 'doctest' -e 'testfile(' -e '*.md' -e '.md"' -e ".md'" <head> -- ':!.adp'`
+     for the hooks that run a doc.
+   - `git ls-tree -r --name-only <head> | grep -E '(^|/)(mkdocs\.yml|conf\.py|docusaurus\.config\.[a-z]+)$'`
+     for the doc-build configs. A config whose docs include the file is a reader, unless that
+     docs build ran as the test command.
+
+   Read the line of every hit outside a candidate, and class it as a reader or a mention. A
+   reader opens, reads, includes, imports, or runs the file, or globs, walks, or joins a
+   directory that holds it. A line in an agent-read file that tells the agent to read or follow
+   the file is a reader too. A mention only names the file: prose, an assertion string, a
+   parameter, a fixture builder that writes its own copy, or a pattern list such as `README*`.
+   A directory-name hit is a mention unless its line walks, globs, or joins that directory. A
+   hit you cannot place in either class is a reader.
+
+When the change is docs only, write the Tests row as `NOT RUN — docs only: <files>. <commands>
+found no reader.` Quote each command you ran. In `## Notes`, list each hit outside a candidate
+as `<file>:<line>`, its class, and a reason of one clause. A docs-only claim without the
+commands keeps the cap, and so does a claim whose commands printed hits but whose Notes list
+none.

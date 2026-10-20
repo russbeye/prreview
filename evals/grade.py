@@ -360,10 +360,100 @@ def grade_response_round_1(run):
     return res
 
 
+def bash_commands(run):
+    sid = json.load(open(os.path.join(run, "outputs", "claude.json")))["session_id"]
+    hits = glob.glob(os.path.expanduser(f"~/.claude/projects/*/{sid}.jsonl"))
+    cmds = []
+    for line in open(hits[0]) if hits else []:
+        d = json.loads(line)
+        if d.get("type") == "assistant":
+            cmds += [c["input"].get("command", "") for c in d["message"].get("content", [])
+                     if c.get("type") == "tool_use" and c["name"] == "Bash"]
+    return cmds
+
+
+def verdict_and_tests(files):
+    d = parse_review(files[0])
+    v = d["sections"].get("Review Verdict", {})
+    m = re.search(r"^\| Tests \| (.*)$", d["text"], re.M)
+    return v, (m.group(1) if m else "")
+
+
+def grade_docs_only_readme(run, task="LGR-12-readme-usage", doc="README.md", word="README"):
+    res = {}
+    files = reviews(run)
+    pat = re.compile(rf"\.adp/{task}/pr-review-local-\d{{8}}-r1\.md$")
+    res["file-path"] = (len(files) == 1 and bool(pat.search(files[0])), f"review files: {[rel(run, f) for f in files]}")
+    if not files:
+        for k in ("verdict-approve", "confidence-high", "tests-docs-only"):
+            res[k] = (False, "no review file")
+    else:
+        v, tests = verdict_and_tests(files)
+        res["verdict-approve"] = (v.get("Verdict") == "APPROVE", f"Verdict={v.get('Verdict')!r}")
+        res["confidence-high"] = ((v.get("Confidence") or "").startswith("HIGH"), f"Confidence={v.get('Confidence')!r}")
+        ok = ("NOT RUN" in tests and re.search(r"docs[- ]only", tests, re.I) and doc in tests and "grep" in tests)
+        res["tests-docs-only"] = (bool(ok), tests[:300] or "no Tests row")
+    # A repository-wide grep (`grep -r`, `grep -R`, or `git grep`, with or without git options
+    # such as `--no-pager`), not a grep over piped output.
+    cmds = [c for c in bash_commands(run) if word in c and re.search(r"\bgit(\s+-{1,2}[\w-]+(=\S+)?)*\s+grep\b|grep\s+(-\w*[rR]|--recursive)", c)]
+    res["grep-ran"] = (bool(cmds), cmds[0][:200] if cmds else f"no repository grep naming {word}")
+    res["no-code-edits"] = no_code_edits(run)
+    res["terminal-two-lines"] = check_terminal(run, {"round": 1})
+    return res
+
+
+def grade_docs_agent_read(run, task="LGR-13-style-return"):
+    res = {}
+    files = reviews(run)
+    pat = re.compile(rf"\.adp/{task}/pr-review-local-\d{{8}}-r1\.md$")
+    res["file-path"] = (len(files) == 1 and bool(pat.search(files[0])), f"review files: {[rel(run, f) for f in files]}")
+    if not files:
+        for k in ("confidence-medium", "tests-not-run"):
+            res[k] = (False, "no review file")
+    else:
+        v, tests = verdict_and_tests(files)
+        res["confidence-medium"] = ((v.get("Confidence") or "").startswith("MEDIUM"), f"Confidence={v.get('Confidence')!r}")
+        # A claim takes the template form "NOT RUN — docs only:". Prose such as "not docs only"
+        # or "the docs-only exemption fails" explains the cap and is not a claim.
+        claims = re.search(r"NOT RUN — docs only:", tests)
+        res["tests-not-run"] = ("NOT RUN" in tests and not claims, tests[:300] or "no Tests row")
+    res["no-code-edits"] = no_code_edits(run)
+    res["terminal-two-lines"] = check_terminal(run, {"round": 1})
+    return res
+
+
+def grade_docs_readme_read(run):
+    res = grade_docs_agent_read(run, "LGR-14-readme-usage")
+    files = reviews(run)
+    text = open(files[0], encoding="utf-8").read() if files else ""
+    res["reader-named"] = ("gen_help.py" in text, "named" if "gen_help.py" in text else "gen_help.py not in the review file")
+    return res
+
+
+def grade_docs_profile_path(run):
+    return grade_docs_only_readme(run, "LGR-15-notes-total", "notes/usage.md", "usage")
+
+
+def grade_docs_mention_only(run):
+    res = grade_docs_only_readme(run, "LGR-16-readme-license")
+    files = reviews(run)
+    text = open(files[0], encoding="utf-8").read() if files else ""
+    m = re.search(r"^## Notes\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+    notes = m.group(1) if m else ""
+    want = [f for f in ("src/ledger.py:", "scripts/make_fixture.py:") if not re.search(re.escape(f) + r"\d", notes)]
+    ok = bool(notes) and not want and re.search(r"mention", notes, re.I)
+    res["hits-classed"] = (bool(ok), f"missing {want}" if want else f"Notes: {notes.strip()[:250]!r}")
+    return res
+
+
 GRADERS = {"branch-single-task": grade_branch_single_task, "multi-task-base": grade_multi_task_base,
            "re-review-round-2": grade_re_review, "ambiguous-placement": grade_ambiguous,
            "untracked-adp": grade_untracked_adp, "response-round-2": grade_response_round,
-           "response-refute-round-2": grade_refute_round, "response-round-1": grade_response_round_1}
+           "response-refute-round-2": grade_refute_round, "response-round-1": grade_response_round_1,
+           "docs-only-readme": grade_docs_only_readme, "docs-agent-read": grade_docs_agent_read,
+           "docs-readme-read": grade_docs_readme_read,
+           "docs-profile-path": grade_docs_profile_path,
+           "docs-mention-only": grade_docs_mention_only}
 
 
 def main(iteration):

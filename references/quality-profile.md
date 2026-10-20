@@ -23,12 +23,18 @@ project_rules:
     category: CON
     evidence: src/http/errors.ts, docs/api.md
     pass: API handlers return the standard error envelope, and clients parse it through the shared client utilities.
+documentation_paths:
+  - site/
+  - notes/*.txt
 ```
 
 - `pass` states the accepted state as a positive sentence. A reviewer checks the code against it.
 - `category` is the finding category a failure of the rule takes. It is optional.
 - `evidence` names the file, test, CI job, or developer decision that makes the rule true for this
   repository. A rule without evidence is general advice, and general advice does not belong here.
+- `documentation_paths` adds paths to the docs-only candidates in
+  `references/finding-conventions.md` § Docs only. It is optional. A listed path still needs the
+  reader grep, and it never makes an agent-read file into docs.
 
 ## Authoring a profile
 

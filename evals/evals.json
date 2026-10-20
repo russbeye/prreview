@@ -344,6 +344,193 @@
           "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
         }
       ]
+    },
+    {
+      "id": 9,
+      "name": "docs-only-readme",
+      "prompt": "review this branch",
+      "expected_output": "Round 1 for LGR-12-readme-usage. The branch changes only README.md, and the repo has no test command. The review proves with grep that nothing reads README.md, so the tests not running does not cap the confidence. The verdict is APPROVE at HIGH, and the Tests row says NOT RUN, docs only, and names the grep.",
+      "files": [
+        "evals/fixtures/build_fixtures.py docs-only-readme"
+      ],
+      "assertions": [
+        {
+          "id": "file-path",
+          "text": "Exactly one review file exists, at .adp/LGR-12-readme-usage/pr-review-local-<YYYYMMDD>-r1.md"
+        },
+        {
+          "id": "verdict-approve",
+          "text": "The Review Verdict is APPROVE"
+        },
+        {
+          "id": "confidence-high",
+          "text": "The Review Verdict Confidence is HIGH"
+        },
+        {
+          "id": "tests-docs-only",
+          "text": "The Tests row says NOT RUN, says docs only, names README.md, and quotes a grep command"
+        },
+        {
+          "id": "grep-ran",
+          "text": "The session ran a Bash command that greps for README"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "docs-agent-read",
+      "prompt": "review this branch",
+      "expected_output": "Round 1 for LGR-13-style-return. The branch changes only references/style.md, which SKILL.md tells an agent to read, and the repo has no test command. The file is code, not docs, so the review confidence stays at MEDIUM.",
+      "files": [
+        "evals/fixtures/build_fixtures.py docs-agent-read"
+      ],
+      "assertions": [
+        {
+          "id": "file-path",
+          "text": "Exactly one review file exists, at .adp/LGR-13-style-return/pr-review-local-<YYYYMMDD>-r1.md"
+        },
+        {
+          "id": "confidence-medium",
+          "text": "The Review Verdict Confidence is MEDIUM"
+        },
+        {
+          "id": "tests-not-run",
+          "text": "The Tests row says NOT RUN and does not claim the change is docs only"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "docs-readme-read",
+      "prompt": "review this branch",
+      "expected_output": "Round 1 for LGR-14-readme-usage. The branch changes only README.md, and the repo has no test command, but scripts/gen_help.py opens README.md. The reader grep finds the script, so the change is not docs only, and the review confidence stays at MEDIUM. The review file names scripts/gen_help.py as the reader.",
+      "files": [
+        "evals/fixtures/build_fixtures.py docs-readme-read"
+      ],
+      "assertions": [
+        {
+          "id": "file-path",
+          "text": "Exactly one review file exists, at .adp/LGR-14-readme-usage/pr-review-local-<YYYYMMDD>-r1.md"
+        },
+        {
+          "id": "confidence-medium",
+          "text": "The Review Verdict Confidence is MEDIUM"
+        },
+        {
+          "id": "tests-not-run",
+          "text": "The Tests row says NOT RUN and does not claim the change is docs only"
+        },
+        {
+          "id": "reader-named",
+          "text": "The review file names scripts/gen_help.py"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "docs-profile-path",
+      "prompt": "review this branch",
+      "expected_output": "Round 1 for LGR-15-notes-total. The branch changes only notes/usage.md, which the quality profile lists under documentation_paths, and the repo has no test command. The reader grep finds no reader, so the change is docs only, and the verdict is APPROVE at HIGH.",
+      "files": [
+        "evals/fixtures/build_fixtures.py docs-profile-path"
+      ],
+      "assertions": [
+        {
+          "id": "file-path",
+          "text": "Exactly one review file exists, at .adp/LGR-15-notes-total/pr-review-local-<YYYYMMDD>-r1.md"
+        },
+        {
+          "id": "verdict-approve",
+          "text": "The Review Verdict is APPROVE"
+        },
+        {
+          "id": "confidence-high",
+          "text": "The Review Verdict Confidence is HIGH"
+        },
+        {
+          "id": "tests-docs-only",
+          "text": "The Tests row says NOT RUN, says docs only, names notes/usage.md, and quotes a grep command"
+        },
+        {
+          "id": "grep-ran",
+          "text": "The session ran a repository-wide grep that names usage"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "docs-mention-only",
+      "prompt": "review this branch",
+      "expected_output": "Round 1 for LGR-16-readme-license. The branch changes README.md and LICENSE.md, and the repo has no test command. git grep finds README.md in a docstring in src/ledger.py and in scripts/make_fixture.py, which writes its own README.md into another folder. Both are mentions, not readers, and the README's link to LICENSE.md sits inside a candidate. The change is docs only, the verdict is APPROVE at HIGH, and Notes list each hit as a mention.",
+      "files": [
+        "evals/fixtures/build_fixtures.py docs-mention-only"
+      ],
+      "assertions": [
+        {
+          "id": "file-path",
+          "text": "Exactly one review file exists, at .adp/LGR-16-readme-license/pr-review-local-<YYYYMMDD>-r1.md"
+        },
+        {
+          "id": "verdict-approve",
+          "text": "The Review Verdict is APPROVE"
+        },
+        {
+          "id": "confidence-high",
+          "text": "The Review Verdict Confidence is HIGH"
+        },
+        {
+          "id": "tests-docs-only",
+          "text": "The Tests row says NOT RUN, says docs only, names README.md, and quotes a grep command"
+        },
+        {
+          "id": "grep-ran",
+          "text": "The session ran a repository-wide grep that names README"
+        },
+        {
+          "id": "hits-classed",
+          "text": "The Notes name src/ledger.py and scripts/make_fixture.py with a line number each and class them as mentions"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
     }
   ]
 }
