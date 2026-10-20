@@ -562,6 +562,37 @@
           "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
         }
       ]
+    },
+    {
+      "id": 15,
+      "name": "docs-makefile",
+      "prompt": "review this branch",
+      "expected_output": "Round 1 for LGR-18-docs-make. The branch changes only docs/Makefile, a build file under docs/ with no extension, and the repo has no test command. The file fails the Candidate check because a file with no extension passes only as README, CHANGELOG, CONTRIBUTING, or LICENSE, so the change is not docs only, and the review confidence stays at MEDIUM.",
+      "files": [
+        "evals/fixtures/build_fixtures.py docs-makefile"
+      ],
+      "assertions": [
+        {
+          "id": "file-path",
+          "text": "Exactly one review file exists, at .adp/LGR-18-docs-make/pr-review-local-<YYYYMMDD>-r1.md"
+        },
+        {
+          "id": "confidence-medium",
+          "text": "The Review Verdict Confidence is MEDIUM"
+        },
+        {
+          "id": "tests-not-run",
+          "text": "The Tests row says NOT RUN and does not claim the change is docs only"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
     }
   ]
 }

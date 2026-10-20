@@ -933,6 +933,38 @@ def build_docs_script(repo):
 
 
 
+def build_docs_makefile(repo):
+    docs_repo(repo, {"docs/guide.md": """
+        # Guide
+
+        Call `total` with a list of amounts.
+    """, "docs/Makefile": """
+        html:
+        \tpython3 -m markdown guide.md > guide.html
+    """})
+    write(repo, "README.md", """
+        # ledger
+
+        Small ledger helpers. Build the HTML guide with `make -C docs html`.
+    """)
+    commit(repo, "Point the README at the guide build", "2026-10-01T09:30:00")
+    git(repo, "checkout", "-q", "-b", "lgr-18-docs-make")
+    task = "LGR-18-docs-make"
+    # No seeded defect. The file sits under docs/ and has no extension, but it is a build file,
+    # so it is code and the change is not docs only, although only a candidate names it.
+    write(repo, "docs/Makefile", """
+        html:
+        \tmkdir -p build
+        \tpython3 -m markdown guide.md > build/guide.html
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The guide build writes its HTML next to the source.",
+        "`make -C docs html` writes the HTML guide to `docs/build/`.",
+        "Make the `html` target write to `docs/build/guide.html`.",
+        "Edit `docs/Makefile`, the one file the change needs."))
+    commit(repo, "Write the HTML guide to docs/build", "2026-10-03T10:00:00")
+
+
 BUILDERS = {
     "branch-single-task": build_branch_single_task,
     "multi-task-base": build_multi_task_base,
@@ -949,6 +981,7 @@ BUILDERS = {
     "docs-profile-path": build_docs_profile_path,
     "docs-mention-only": build_docs_mention_only,
     "docs-script": build_docs_script,
+    "docs-makefile": build_docs_makefile,
 }
 
 if __name__ == "__main__":

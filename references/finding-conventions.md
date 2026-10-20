@@ -100,8 +100,10 @@ checks only when the tests did not run. One failed check keeps the MEDIUM cap.
 
 1. **Candidate.** The path matches `README*`, `CHANGELOG*`, `CONTRIBUTING*`, `LICENSE*`, or
    `docs/**`, or a path in the quality profile's `documentation_paths`. The file name also ends in
-   `.md`, `.markdown`, `.rst`, `.txt`, or `.adoc`, or has no extension. A script or a config,
-   such as `docs/run_examples.py` or `docs/conf.py`, is code wherever it sits.
+   `.md`, `.markdown`, `.rst`, `.txt`, or `.adoc`. A file with no extension passes only when its
+   name is `README`, `CHANGELOG`, `CONTRIBUTING`, or `LICENSE`. A script, a config, or a build
+   file, such as `docs/run_examples.py`, `docs/conf.py`, or `docs/Makefile`, is code wherever it
+   sits.
 2. **Not agent-read.** The file is not `SKILL.md`, `CLAUDE.md`, `AGENTS.md`, or a guidance file
    from Step 4, and it is not under `references/`, `prompts/`, `templates/`, or `.claude/`. An
    agent follows these files, so they are code, whatever the profile says.

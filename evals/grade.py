@@ -450,6 +450,10 @@ def grade_docs_script(run):
     return grade_docs_agent_read(run, "LGR-17-examples-exit")
 
 
+def grade_docs_makefile(run):
+    return grade_docs_agent_read(run, "LGR-18-docs-make")
+
+
 GRADERS = {"branch-single-task": grade_branch_single_task, "multi-task-base": grade_multi_task_base,
            "re-review-round-2": grade_re_review, "ambiguous-placement": grade_ambiguous,
            "untracked-adp": grade_untracked_adp, "response-round-2": grade_response_round,
@@ -458,7 +462,8 @@ GRADERS = {"branch-single-task": grade_branch_single_task, "multi-task-base": gr
            "docs-readme-read": grade_docs_readme_read,
            "docs-profile-path": grade_docs_profile_path,
            "docs-mention-only": grade_docs_mention_only,
-           "docs-script": grade_docs_script}
+           "docs-script": grade_docs_script,
+           "docs-makefile": grade_docs_makefile}
 
 
 def main(iteration):
