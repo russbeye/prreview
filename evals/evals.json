@@ -372,7 +372,7 @@
         },
         {
           "id": "grep-ran",
-          "text": "The session ran a Bash command that greps for README"
+          "text": "The session ran a repository-wide grep that names README"
         },
         {
           "id": "no-code-edits",
@@ -521,6 +521,37 @@
         {
           "id": "hits-classed",
           "text": "The Notes name src/ledger.py and scripts/make_fixture.py with a line number each and class them as mentions"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "name": "docs-script",
+      "prompt": "review this branch",
+      "expected_output": "Round 1 for LGR-17-examples-exit. The branch changes only docs/run_examples.py, a Python script under docs/, and the repo has no test command. The file fails the Candidate check because a .py file is code wherever it sits, so the change is not docs only, and the review confidence stays at MEDIUM.",
+      "files": [
+        "evals/fixtures/build_fixtures.py docs-script"
+      ],
+      "assertions": [
+        {
+          "id": "file-path",
+          "text": "Exactly one review file exists, at .adp/LGR-17-examples-exit/pr-review-local-<YYYYMMDD>-r1.md"
+        },
+        {
+          "id": "confidence-medium",
+          "text": "The Review Verdict Confidence is MEDIUM"
+        },
+        {
+          "id": "tests-not-run",
+          "text": "The Tests row says NOT RUN and does not claim the change is docs only"
         },
         {
           "id": "no-code-edits",

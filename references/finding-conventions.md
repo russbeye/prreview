@@ -99,7 +99,9 @@ A change is docs only when every changed file outside `.adp/` passes all three c
 checks only when the tests did not run. One failed check keeps the MEDIUM cap.
 
 1. **Candidate.** The path matches `README*`, `CHANGELOG*`, `CONTRIBUTING*`, `LICENSE*`, or
-   `docs/**`, or a path in the quality profile's `documentation_paths`.
+   `docs/**`, or a path in the quality profile's `documentation_paths`. The file name also ends in
+   `.md`, `.markdown`, `.rst`, `.txt`, or `.adoc`, or has no extension. A script or a config,
+   such as `docs/run_examples.py` or `docs/conf.py`, is code wherever it sits.
 2. **Not agent-read.** The file is not `SKILL.md`, `CLAUDE.md`, `AGENTS.md`, or a guidance file
    from Step 4, and it is not under `references/`, `prompts/`, `templates/`, or `.claude/`. An
    agent follows these files, so they are code, whatever the profile says.
@@ -113,7 +115,8 @@ checks only when the tests did not run. One failed check keeps the MEDIUM cap.
      for the doc-build configs. A config whose docs include the file is a reader, unless that
      docs build ran as the test command.
 
-   Read the line of every hit outside a candidate, and class it as a reader or a mention. A
+   A candidate here is any tracked file that passes checks 1 and 2, changed or not. Read the line
+   of every hit outside a candidate, and class it as a reader or a mention. A
    reader opens, reads, includes, imports, or runs the file, or globs, walks, or joins a
    directory that holds it. A line in an agent-read file that tells the agent to read or follow
    the file is a reader too. A mention only names the file: prose, an assertion string, a

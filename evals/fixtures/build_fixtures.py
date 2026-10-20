@@ -903,6 +903,36 @@ def build_docs_mention_only(repo):
 
 
 
+def build_docs_script(repo):
+    docs_repo(repo, {"docs/run_examples.py": """
+        \"\"\"Run the README examples by hand and print each result.\"\"\"
+        from src.ledger import total
+
+        print(total([1, 2, 3]))
+    """})
+    git(repo, "checkout", "-q", "-b", "lgr-17-examples-exit")
+    task = "LGR-17-examples-exit"
+    # No seeded defect. The file sits under docs/, but it is a Python script, so it is code and
+    # the change is not docs only, although no tracked file names it.
+    write(repo, "docs/run_examples.py", """
+        \"\"\"Run the README examples by hand and print each result.\"\"\"
+        import sys
+
+        from src.ledger import total
+
+        result = total([1, 2, 3])
+        print(result)
+        sys.exit(0 if result == 6 else 1)
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The examples script does not report a wrong result.",
+        "Running `docs/run_examples.py` exits non-zero when `total` gives a wrong result.",
+        "Make `docs/run_examples.py` exit 1 when the example result is wrong.",
+        "Edit `docs/run_examples.py`, the one file the change needs."))
+    commit(repo, "Exit non-zero from the examples script on a wrong result", "2026-10-03T10:00:00")
+
+
+
 BUILDERS = {
     "branch-single-task": build_branch_single_task,
     "multi-task-base": build_multi_task_base,
@@ -918,6 +948,7 @@ BUILDERS = {
     "docs-readme-read": build_docs_readme_read,
     "docs-profile-path": build_docs_profile_path,
     "docs-mention-only": build_docs_mention_only,
+    "docs-script": build_docs_script,
 }
 
 if __name__ == "__main__":
