@@ -624,6 +624,37 @@
           "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
         }
       ]
+    },
+    {
+      "id": 17,
+      "name": "docs-jekyll",
+      "prompt": "review this branch",
+      "expected_output": "Round 1 for LGR-20-pages-intro. The branch changes only docs/index.md, and the repo has no test command. docs/_config.yml configures a Jekyll site that builds every file under docs/, so the config listing finds a reader, the change is not docs only, and the review confidence stays at MEDIUM.",
+      "files": [
+        "evals/fixtures/build_fixtures.py docs-jekyll"
+      ],
+      "assertions": [
+        {
+          "id": "file-path",
+          "text": "Exactly one review file exists, at .adp/LGR-20-pages-intro/pr-review-local-<YYYYMMDD>-r1.md"
+        },
+        {
+          "id": "confidence-medium",
+          "text": "The Review Verdict Confidence is MEDIUM"
+        },
+        {
+          "id": "tests-not-run",
+          "text": "The Tests row says NOT RUN and does not claim the change is docs only"
+        },
+        {
+          "id": "no-code-edits",
+          "text": "No file outside .adp/ changed"
+        },
+        {
+          "id": "terminal-two-lines",
+          "text": "Terminal output is a summary line of 250 characters or fewer followed by the repo-relative review file path"
+        }
+      ]
     }
   ]
 }

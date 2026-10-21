@@ -114,9 +114,10 @@ checks only when the tests did not run. One failed check keeps the MEDIUM cap.
      `-e '<dir>'` for every directory on the file's path.
    - `git grep -nF -e 'include_str!' -e 'doctest' -e 'testfile(' -e '*.md' -e '.md"' -e ".md'" <head> -- ':!.adp'`
      for the hooks that run a doc.
-   - `git ls-tree -r --name-only <head> | grep -E '(^|/)(mkdocs\.yml|conf\.py|docusaurus\.config\.[a-z]+)$'`
+   - `git ls-tree -r --name-only <head> | grep -E '(^|/)(mkdocs\.yml|conf\.py|docusaurus\.config\.[a-z]+|_config\.yml|book\.toml|hugo\.(toml|yaml|json)|antora\.yml)$'`
      for the doc-build configs. A config whose docs include the file is a reader, unless that
-     docs build ran as the test command.
+     docs build ran as the test command. A config builds every file under its own directory,
+     unless its lines name another source directory.
 
    A candidate here is any tracked file that passes checks 1 and 2, changed or not. Read the line
    of every hit outside a candidate, and class it as a reader or a mention. A

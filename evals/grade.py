@@ -458,6 +458,10 @@ def grade_docs_requirements(run):
     return grade_docs_agent_read(run, "LGR-19-docs-reqs")
 
 
+def grade_docs_jekyll(run):
+    return grade_docs_agent_read(run, "LGR-20-pages-intro")
+
+
 GRADERS = {"branch-single-task": grade_branch_single_task, "multi-task-base": grade_multi_task_base,
            "re-review-round-2": grade_re_review, "ambiguous-placement": grade_ambiguous,
            "untracked-adp": grade_untracked_adp, "response-round-2": grade_response_round,
@@ -468,7 +472,8 @@ GRADERS = {"branch-single-task": grade_branch_single_task, "multi-task-base": gr
            "docs-mention-only": grade_docs_mention_only,
            "docs-script": grade_docs_script,
            "docs-makefile": grade_docs_makefile,
-           "docs-requirements": grade_docs_requirements}
+           "docs-requirements": grade_docs_requirements,
+           "docs-jekyll": grade_docs_jekyll}
 
 
 def main(iteration):

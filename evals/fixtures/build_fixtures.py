@@ -990,6 +990,29 @@ def build_docs_requirements(repo):
     commit(repo, "Pin Markdown 3.6 for the guide tools", "2026-10-03T10:00:00")
 
 
+def build_docs_jekyll(repo):
+    docs_repo(repo, {"docs/_config.yml": "theme: jekyll-theme-minimal\n", "docs/index.md": """
+        # Guide
+
+        Call `total` with a list of amounts.
+    """})
+    git(repo, "checkout", "-q", "-b", "lgr-20-pages-intro")
+    task = "LGR-20-pages-intro"
+    # No seeded defect. The page is Markdown under docs/, and no tracked file names it, but
+    # docs/_config.yml makes docs/ a Jekyll site that builds every page in it, so the change is
+    # not docs only.
+    write(repo, "docs/index.md", """
+        # Guide
+
+        Call `total` with a list of amounts. It returns their sum.
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The guide page does not say what `total` returns.",
+        "A reader of the guide page learns that `total` returns the sum.",
+        "Add one sentence on the return value to `docs/index.md`."))
+    commit(repo, "Say what total returns on the guide page", "2026-10-03T10:00:00")
+
+
 BUILDERS = {
     "branch-single-task": build_branch_single_task,
     "multi-task-base": build_multi_task_base,
@@ -1008,6 +1031,7 @@ BUILDERS = {
     "docs-script": build_docs_script,
     "docs-makefile": build_docs_makefile,
     "docs-requirements": build_docs_requirements,
+    "docs-jekyll": build_docs_jekyll,
 }
 
 if __name__ == "__main__":
