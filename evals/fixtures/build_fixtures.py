@@ -965,6 +965,31 @@ def build_docs_makefile(repo):
     commit(repo, "Write the HTML guide to docs/build", "2026-10-03T10:00:00")
 
 
+def build_docs_requirements(repo):
+    docs_repo(repo, {"docs/guide.md": """
+        # Guide
+
+        Call `total` with a list of amounts.
+    """, "docs/requirements.txt": "markdown==3.5\n"})
+    write(repo, "README.md", """
+        # ledger
+
+        Small ledger helpers. Install the guide tools with `pip install -r docs/requirements.txt`.
+    """)
+    commit(repo, "Point the README at the guide tools", "2026-10-01T09:30:00")
+    git(repo, "checkout", "-q", "-b", "lgr-19-docs-reqs")
+    task = "LGR-19-docs-reqs"
+    # No seeded defect. The file sits under docs/ and ends in .txt, but pip reads it by its name,
+    # so it is code and the change is not docs only, although only a candidate names it.
+    write(repo, "docs/requirements.txt", "markdown==3.6\n")
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The guide tools pin an old Markdown release.",
+        "`pip install -r docs/requirements.txt` installs Markdown 3.6.",
+        "Pin `markdown==3.6` in `docs/requirements.txt`.",
+        "Edit `docs/requirements.txt`, the one file the change needs."))
+    commit(repo, "Pin Markdown 3.6 for the guide tools", "2026-10-03T10:00:00")
+
+
 BUILDERS = {
     "branch-single-task": build_branch_single_task,
     "multi-task-base": build_multi_task_base,
@@ -982,6 +1007,7 @@ BUILDERS = {
     "docs-mention-only": build_docs_mention_only,
     "docs-script": build_docs_script,
     "docs-makefile": build_docs_makefile,
+    "docs-requirements": build_docs_requirements,
 }
 
 if __name__ == "__main__":

@@ -103,7 +103,8 @@ checks only when the tests did not run. One failed check keeps the MEDIUM cap.
    `.md`, `.markdown`, `.rst`, `.txt`, or `.adoc`. A file with no extension passes only when its
    name is `README`, `CHANGELOG`, `CONTRIBUTING`, or `LICENSE`. A script, a config, or a build
    file, such as `docs/run_examples.py`, `docs/conf.py`, or `docs/Makefile`, is code wherever it
-   sits.
+   sits. So is a file that a build tool or a package manager reads by its name, such as
+   `docs/requirements.txt` or `docs/CMakeLists.txt`, even when its extension passes.
 2. **Not agent-read.** The file is not `SKILL.md`, `CLAUDE.md`, `AGENTS.md`, or a guidance file
    from Step 4, and it is not under `references/`, `prompts/`, `templates/`, or `.claude/`. An
    agent follows these files, so they are code, whatever the profile says.
