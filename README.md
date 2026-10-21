@@ -24,6 +24,11 @@ record in the same task folder.
 
 ## Quick start
 
+Before you start, you need two things. The GitHub CLI, `gh`, must be signed in to your account,
+because Claude reads the pull request with it. Your project must also have an ADP task in `.adp/`
+that covers the change. Without a task, Claude stops and asks you how to continue, so start one
+with [ADP](https://github.com/russbeye/auditable-dev-protocol) first.
+
 1. Install the skill:
 
    ```bash
@@ -239,8 +244,8 @@ review file that line 2 names. Then:
   RESPONSE <PR-ID>: <your answer and its evidence> to the command's prompt for each other open
   finding.
 - APPROVE below HIGH confidence, and the only reason is that the tests did not run: stop. Tell me
-  the reason from the Tests row under Inspected. A change that no test covers, such as a docs-only
-  change, cannot reach HIGH.
+  the reason from the Tests row under Inspected. A round whose tests did not run cannot reach
+  HIGH.
 - APPROVE below HIGH confidence for any other reason: read the Confidence basis, fix what lowered
   it, commit, push, and run the next round.
 Never write a ledger line in the audit log. Only I accept a risk.
