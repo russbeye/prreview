@@ -114,13 +114,17 @@ checks only when the tests did not run. One failed check keeps the MEDIUM cap.
      `-e '<dir>'` for every directory on the file's path.
    - `git grep -nF -e 'include_str!' -e 'doctest' -e 'testfile(' -e '*.md' -e '.md"' -e ".md'" <head> -- ':!.adp'`
      for the hooks that run a doc.
-   - `git ls-tree -r --name-only <head> | grep -E '(^|/)(mkdocs\.yml|conf\.py|docusaurus\.config\.[a-z]+|_config\.yml|book\.toml|hugo\.(toml|yaml|json)|antora\.yml)$'`
+   - `git ls-tree -r --name-only <head> | grep -E '(^|/)(mkdocs\.ya?ml|conf\.py|docusaurus\.config\.[a-z]+|_config\.(ya?ml|toml)|book\.toml|hugo\.(toml|yaml|json)|antora\.yml)$'`
      for the doc-build configs. A config whose docs include the file is a reader, unless that
      docs build ran as the test command. A config builds every file under its own directory,
-     unless its lines name another source directory.
+     unless its lines name another source directory, and every file that one of those files
+     includes.
 
    A candidate here is any tracked file that passes checks 1 and 2, changed or not. Read the line
-   of every hit outside a candidate, and class it as a reader or a mention. A
+   of every hit outside a candidate, and class it as a reader or a mention. Read a hit inside a
+   candidate too when its line includes, embeds, or transcludes the file, such as
+   `.. include::`, `{% include %}`, or `--8<--`. That line is a reader when a listed config
+   builds the candidate that holds it. A plain link between two candidates stays a mention. A
    reader opens, reads, includes, imports, or runs the file, or globs, walks, or joins a
    directory that holds it. A line in an agent-read file that tells the agent to read or follow
    the file is a reader too. A mention only names the file: prose, an assertion string, a
@@ -129,7 +133,7 @@ checks only when the tests did not run. One failed check keeps the MEDIUM cap.
    hit you cannot place in either class is a reader.
 
 When the change is docs only, write the Tests row as `NOT RUN — docs only: <files>. <commands>
-found no reader.` Quote each command you ran. In `## Notes`, list each hit outside a candidate
-as `<file>:<line>`, its class, and a reason of one clause. A docs-only claim without the
-commands keeps the cap, and so does a claim whose commands printed hits but whose Notes list
-none.
+found no reader.` Quote each command you ran. In `## Notes`, list each hit outside a candidate,
+and each include line inside one, as `<file>:<line>`, its class, and a reason of one clause.
+A docs-only claim without the commands keeps the cap, and so does a claim whose
+commands printed hits but whose Notes list none.

@@ -1013,6 +1013,37 @@ def build_docs_jekyll(repo):
     commit(repo, "Say what total returns on the guide page", "2026-10-03T10:00:00")
 
 
+def build_docs_include(repo):
+    docs_repo(repo, {"README.rst": """
+        ledger
+        ======
+
+        Small ledger helpers. Call ``total`` with a list of amounts.
+    """, "docs/conf.py": "project = 'ledger'\n", "docs/index.rst": """
+        Ledger guide
+        ============
+
+        .. include:: ../README.rst
+    """})
+    git(repo, "checkout", "-q", "-b", "lgr-21-readme-return")
+    task = "LGR-21-readme-return"
+    # No seeded defect. README.rst sits outside docs/, and the only line that names it is inside
+    # docs/index.rst, another candidate. That line includes README.rst into the Sphinx build that
+    # docs/conf.py configures, so the change is not docs only.
+    write(repo, "README.rst", """
+        ledger
+        ======
+
+        Small ledger helpers. Call ``total`` with a list of amounts. It returns their sum.
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The README does not say what `total` returns.",
+        "A reader of `README.rst` learns that `total` returns the sum.",
+        "Add one sentence on the return value to `README.rst`.",
+        "Edit `README.rst`, the one file the change needs."))
+    commit(repo, "Say what total returns in the README", "2026-10-03T10:00:00")
+
+
 BUILDERS = {
     "branch-single-task": build_branch_single_task,
     "multi-task-base": build_multi_task_base,
@@ -1032,6 +1063,7 @@ BUILDERS = {
     "docs-makefile": build_docs_makefile,
     "docs-requirements": build_docs_requirements,
     "docs-jekyll": build_docs_jekyll,
+    "docs-include": build_docs_include,
 }
 
 if __name__ == "__main__":
