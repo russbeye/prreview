@@ -44,7 +44,7 @@ reader parses it.
 | Memory bank | <slices read> / — |
 | Quality profile | `.adp/pr-review-quality.yaml` <id> v<version> / — |
 | Prior PR comments considered | <count> / — |
-| Tests | `<command>`: <p> pass, <f> fail, <s> skip / NOT RUN — <reason> |
+| Tests | `<command>`: <p> pass, <f> fail, <s> skip / NOT RUN — <reason> / NOT RUN — docs only: <files>. <grep commands> found no reader. |
 
 ## Findings
 

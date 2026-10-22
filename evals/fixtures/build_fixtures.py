@@ -620,6 +620,430 @@ def to_cents(amount):
         write(repo, f".adp/{task}/audit-log.md", log.replace("\n## Problem Statement", "\n" + branch_line + "\n## Problem Statement", 1))
 
 
+def docs_repo(repo, extra):
+    # No tests/ and no run_tests.sh: the project has no test command, so a review on main caps
+    # its confidence at MEDIUM. `extra` maps paths to the files the case adds to the base commit.
+    os.makedirs(repo, exist_ok=True)
+    git(repo, "init", "-q", "-b", "main")
+    git(repo, "config", "core.excludesFile", "/dev/null")
+    write(repo, "src/__init__.py", "")
+    write(repo, "src/ledger.py", BASE_LEDGER)
+    write(repo, "README.md", """
+        # ledger
+
+        Small ledger helpers.
+    """)
+    write(repo, ".gitignore", "__pycache__/\n")
+    write(repo, "CLAUDE.md", """
+        # CLAUDE.md
+        This project has no test suite. All ADP work lives in `.adp/<task-id>/`.
+    """)
+    for path, text in extra.items():
+        write(repo, path, text)
+    write(repo, ".adp/.gitkeep", "")
+    commit(repo, "Initial ledger", "2026-10-01T09:00:00")
+
+
+def docs_log(task, problem, done, decision, approach="Edit the one documentation file."):
+    return f"""
+# Audit Log — {task}
+
+## Problem Statement
+**What the problem is:** {problem}
+**What the problem is not:** Not a change to any code.
+**Human-level definition of done:** {done}
+**Confirmed by:** developer   **Date:** 2026-10-02
+**Revision history:** none.
+
+## Knowledge Gap Document
+| Known | Inferred (flagged) | Cannot Determine |
+|-------|--------------------|------------------|
+| `src/ledger.py` defines `total`, which returns `sum(amounts)`. | — | — |
+
+## Open Questions (resolve before Phase 3)
+1. None.
+
+## Recommendation Brief
+**Recommended approach:** {approach}
+**Defense:** The text is the whole change.
+**Alternatives considered:**
+| Alternative | Reason rejected |
+|-------------|-----------------|
+| A new file | One section does not need one. |
+**Assumptions this depends on:** None.
+
+## Pre-Mortem Report
+Assumed: this implementation failed in production. Most likely causes:
+| Failure mode | Likelihood | Impact | Developer response (rebuttal or mitigation) | Monitoring signal | Implemented at |
+|--------------|------------|--------|---------------------------------------------|-------------------|----------------|
+| The text drifts from `total`. | L | L | Rebuttal: `total` is one line and the text quotes it. | A reader reports a wrong example — fires at one — distinguishes: a reader on an old copy, which the commit shows. | — |
+
+## Implementation Authorization
+All HIGH-likelihood items resolved: YES
+Authorized by: developer
+
+## Decision Log
+
+### [DL-001] One section
+- **Decision:** {decision}
+- **Alternatives considered:** None worth a row.
+- **Rationale:** It is the smallest text that meets the Problem Statement.
+- **Confidence:** HIGH
+- **Confidence basis:** DIRECT EVIDENCE — `src/ledger.py` returns `sum(amounts)`.
+- **Assumptions:** None.
+- **Monitoring signal:** A reader reports a wrong example — fires at one — distinguishes: a reader on an old copy, which the commit shows.
+- **Created:** 2026-10-02, Phase 5
+- **Status:** OPEN
+
+## Test Adversary Document
+**What passing tests prove:** Nothing. The project has no test suite, and the change is text.
+**What passing tests do not prove:**
+| Gap | Why untestable / untested | Risk if the assumption is wrong | dl_ref |
+|-----|---------------------------|---------------------------------|--------|
+| The example output | No test suite exists | A reader copies a wrong example | DL-001 |
+**Untestable assumptions logged to Decision Log:** DL-001
+
+## PR Summary
+**Problem being solved:** → Problem Statement Document
+**Approach taken:** → Recommendation Brief
+**Key decisions:** → Decision Log
+
+## 🚩 Mandatory Review Items (LOW-confidence decisions)
+No Decision Log entry is at LOW confidence.
+
+## Residual Risk
+None beyond DL-001.
+
+## Test Coverage Gaps
+→ Test Adversary Document
+"""
+
+
+def build_docs_only_readme(repo):
+    docs_repo(repo, {})
+    git(repo, "checkout", "-q", "-b", "lgr-12-readme-usage")
+    task = "LGR-12-readme-usage"
+    # No seeded defect: the README example is true, and no file in the repo reads README.md.
+    write(repo, "README.md", """
+        # ledger
+
+        Small ledger helpers.
+
+        ## Usage
+
+        `total` returns the sum of a list of amounts:
+
+        ```python
+        from src.ledger import total
+
+        total([1, 2, 3])  # 6
+        ```
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The README does not say how to call `total`.",
+        "A reader of the README can call `total` and knows what it returns.",
+        "Add a Usage section to `README.md` with one `total` example."))
+    commit(repo, "Document total() in the README", "2026-10-03T10:00:00")
+
+
+SKILL_MD = """
+    ---
+    name: ledger-style
+    description: Write ledger helpers in the house style.
+    ---
+
+    # ledger-style
+
+    Read `references/style.md` before you write a helper, and follow every rule in it.
+"""
+
+
+def build_docs_agent_read(repo):
+    docs_repo(repo, {"SKILL.md": SKILL_MD, "references/style.md": """
+        # Style
+
+        - Give every helper a one-line docstring.
+    """})
+    git(repo, "checkout", "-q", "-b", "lgr-13-style-return")
+    task = "LGR-13-style-return"
+    # No seeded defect: the new rule is true of `total`. The file is Markdown that an agent
+    # follows, because SKILL.md tells the agent to read it, so the change is code, not docs.
+    write(repo, "references/style.md", """
+        # Style
+
+        - Give every helper a one-line docstring.
+        - Start the docstring with "Return" when the helper returns a value.
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The style rules do not say how a docstring starts.",
+        "An agent that follows `references/style.md` starts a returning helper's docstring with \"Return\".",
+        "Add one rule to `references/style.md`."))
+    commit(repo, "Add the docstring start rule", "2026-10-03T10:00:00")
+
+
+def build_docs_readme_read(repo):
+    docs_repo(repo, {"scripts/gen_help.py": """
+        \"\"\"Print the README as the command-line help text.\"\"\"
+        print(open("README.md", encoding="utf-8").read())
+    """})
+    git(repo, "checkout", "-q", "-b", "lgr-14-readme-usage")
+    task = "LGR-14-readme-usage"
+    # No seeded defect in the text. scripts/gen_help.py opens README.md, so the README is a
+    # runtime input and the change is not docs only, although only README.md changed.
+    write(repo, "README.md", """
+        # ledger
+
+        Small ledger helpers.
+
+        ## Usage
+
+        `total` returns the sum of a list of amounts:
+
+        ```python
+        from src.ledger import total
+
+        total([1, 2, 3])  # 6
+        ```
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The README does not say how to call `total`.",
+        "A reader of the README can call `total` and knows what it returns.",
+        "Add a Usage section to `README.md` with one `total` example."))
+    commit(repo, "Document total() in the README", "2026-10-03T10:00:00")
+
+
+
+def build_docs_profile_path(repo):
+    docs_repo(repo, {"notes/usage.md": """
+        # Usage notes
+
+        Import the helpers from `src.ledger`.
+    """, ".adp/pr-review-quality.yaml": """
+        id: ledger-quality
+        version: 1
+        review_dimensions:
+          - id: correctness
+            required: true
+            pass: Changed behavior satisfies the requested outcome.
+        documentation_paths:
+          - notes/
+    """})
+    git(repo, "checkout", "-q", "-b", "lgr-15-notes-total")
+    task = "LGR-15-notes-total"
+    # No seeded defect. notes/ is not a default doc path, so only the profile's
+    # documentation_paths makes notes/usage.md a docs-only candidate.
+    write(repo, "notes/usage.md", """
+        # Usage notes
+
+        Import the helpers from `src.ledger`.
+
+        `total([1, 2, 3])` returns `6`.
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The usage notes do not show what `total` returns.",
+        "A reader of `notes/usage.md` knows what `total` returns.",
+        "Add one `total` example to `notes/usage.md`."))
+    commit(repo, "Show total() in the usage notes", "2026-10-03T10:00:00")
+
+
+
+def build_docs_mention_only(repo):
+    docs_repo(repo, {
+        "src/ledger.py": BASE_LEDGER.replace('"""Small ledger helpers."""', '"""Small ledger helpers. See README.md for usage."""'),
+        "LICENSE.md": """
+            # License
+
+            Copyright 2025 Ledger authors. All rights reserved.
+        """,
+        "scripts/make_fixture.py": """
+            \"\"\"Write a sample project into the folder named on the command line.\"\"\"
+            import os
+            import sys
+
+            dest = sys.argv[1]
+            os.makedirs(dest, exist_ok=True)
+            with open(os.path.join(dest, "README.md"), "w", encoding="utf-8") as f:
+                f.write("# sample\\n")
+        """})
+    git(repo, "checkout", "-q", "-b", "lgr-16-readme-license")
+    task = "LGR-16-readme-license"
+    # No seeded defect. Two files name README.md without reading the repo's README:
+    # a docstring in src/ledger.py and a fixture script that writes its own copy. The README
+    # names LICENSE.md, and both are candidates, so that link is not a reader either.
+    write(repo, "README.md", """
+        # ledger
+
+        Small ledger helpers.
+
+        ## Usage
+
+        `total` returns the sum of a list of amounts:
+
+        ```python
+        from src.ledger import total
+
+        total([1, 2, 3])  # 6
+        ```
+
+        ## License
+
+        See `LICENSE.md`.
+    """)
+    write(repo, "LICENSE.md", """
+        # License
+
+        Copyright 2026 Ledger authors. All rights reserved.
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The README does not say how to call `total` or where the license is, and the license year is old.",
+        "A reader of the README can call `total`, finds the license, and the license shows 2026.",
+        "Add Usage and License sections to `README.md`, and set the year in `LICENSE.md` to 2026.",
+        "Edit `README.md` and `LICENSE.md`, the two documentation files the change needs."))
+    commit(repo, "Document total() and the license", "2026-10-03T10:00:00")
+
+
+
+def build_docs_script(repo):
+    docs_repo(repo, {"docs/run_examples.py": """
+        \"\"\"Run the README examples by hand and print each result.\"\"\"
+        from src.ledger import total
+
+        print(total([1, 2, 3]))
+    """})
+    git(repo, "checkout", "-q", "-b", "lgr-17-examples-exit")
+    task = "LGR-17-examples-exit"
+    # No seeded defect. The file sits under docs/, but it is a Python script, so it is code and
+    # the change is not docs only, although no tracked file names it.
+    write(repo, "docs/run_examples.py", """
+        \"\"\"Run the README examples by hand and print each result.\"\"\"
+        import sys
+
+        from src.ledger import total
+
+        result = total([1, 2, 3])
+        print(result)
+        sys.exit(0 if result == 6 else 1)
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The examples script does not report a wrong result.",
+        "Running `docs/run_examples.py` exits non-zero when `total` gives a wrong result.",
+        "Make `docs/run_examples.py` exit 1 when the example result is wrong.",
+        "Edit `docs/run_examples.py`, the one file the change needs."))
+    commit(repo, "Exit non-zero from the examples script on a wrong result", "2026-10-03T10:00:00")
+
+
+
+def build_docs_makefile(repo):
+    docs_repo(repo, {"docs/guide.md": """
+        # Guide
+
+        Call `total` with a list of amounts.
+    """, "docs/Makefile": """
+        html:
+        \tpython3 -m markdown guide.md > guide.html
+    """})
+    write(repo, "README.md", """
+        # ledger
+
+        Small ledger helpers. Build the HTML guide with `make -C docs html`.
+    """)
+    commit(repo, "Point the README at the guide build", "2026-10-01T09:30:00")
+    git(repo, "checkout", "-q", "-b", "lgr-18-docs-make")
+    task = "LGR-18-docs-make"
+    # No seeded defect. The file sits under docs/ and has no extension, but it is a build file,
+    # so it is code and the change is not docs only, although only a candidate names it.
+    write(repo, "docs/Makefile", """
+        html:
+        \tmkdir -p build
+        \tpython3 -m markdown guide.md > build/guide.html
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The guide build writes its HTML next to the source.",
+        "`make -C docs html` writes the HTML guide to `docs/build/`.",
+        "Make the `html` target write to `docs/build/guide.html`.",
+        "Edit `docs/Makefile`, the one file the change needs."))
+    commit(repo, "Write the HTML guide to docs/build", "2026-10-03T10:00:00")
+
+
+def build_docs_requirements(repo):
+    docs_repo(repo, {"docs/guide.md": """
+        # Guide
+
+        Call `total` with a list of amounts.
+    """, "docs/requirements.txt": "markdown==3.5\n"})
+    write(repo, "README.md", """
+        # ledger
+
+        Small ledger helpers. Install the guide tools with `pip install -r docs/requirements.txt`.
+    """)
+    commit(repo, "Point the README at the guide tools", "2026-10-01T09:30:00")
+    git(repo, "checkout", "-q", "-b", "lgr-19-docs-reqs")
+    task = "LGR-19-docs-reqs"
+    # No seeded defect. The file sits under docs/ and ends in .txt, but pip reads it by its name,
+    # so it is code and the change is not docs only, although only a candidate names it.
+    write(repo, "docs/requirements.txt", "markdown==3.6\n")
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The guide tools pin an old Markdown release.",
+        "`pip install -r docs/requirements.txt` installs Markdown 3.6.",
+        "Pin `markdown==3.6` in `docs/requirements.txt`.",
+        "Edit `docs/requirements.txt`, the one file the change needs."))
+    commit(repo, "Pin Markdown 3.6 for the guide tools", "2026-10-03T10:00:00")
+
+
+def build_docs_jekyll(repo):
+    docs_repo(repo, {"docs/_config.yml": "theme: jekyll-theme-minimal\n", "docs/index.md": """
+        # Guide
+
+        Call `total` with a list of amounts.
+    """})
+    git(repo, "checkout", "-q", "-b", "lgr-20-pages-intro")
+    task = "LGR-20-pages-intro"
+    # No seeded defect. The page is Markdown under docs/, and no tracked file names it, but
+    # docs/_config.yml makes docs/ a Jekyll site that builds every page in it, so the change is
+    # not docs only.
+    write(repo, "docs/index.md", """
+        # Guide
+
+        Call `total` with a list of amounts. It returns their sum.
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The guide page does not say what `total` returns.",
+        "A reader of the guide page learns that `total` returns the sum.",
+        "Add one sentence on the return value to `docs/index.md`."))
+    commit(repo, "Say what total returns on the guide page", "2026-10-03T10:00:00")
+
+
+def build_docs_include(repo):
+    docs_repo(repo, {"README.rst": """
+        ledger
+        ======
+
+        Small ledger helpers. Call ``total`` with a list of amounts.
+    """, "docs/conf.py": "project = 'ledger'\n", "docs/index.rst": """
+        Ledger guide
+        ============
+
+        .. include:: ../README.rst
+    """})
+    git(repo, "checkout", "-q", "-b", "lgr-21-readme-return")
+    task = "LGR-21-readme-return"
+    # No seeded defect. README.rst sits outside docs/, and the only line that names it is inside
+    # docs/index.rst, another candidate. That line includes README.rst into the Sphinx build that
+    # docs/conf.py configures, so the change is not docs only.
+    write(repo, "README.rst", """
+        ledger
+        ======
+
+        Small ledger helpers. Call ``total`` with a list of amounts. It returns their sum.
+    """)
+    write(repo, f".adp/{task}/audit-log.md", docs_log(
+        task, "The README does not say what `total` returns.",
+        "A reader of `README.rst` learns that `total` returns the sum.",
+        "Add one sentence on the return value to `README.rst`.",
+        "Edit `README.rst`, the one file the change needs."))
+    commit(repo, "Say what total returns in the README", "2026-10-03T10:00:00")
+
+
 BUILDERS = {
     "branch-single-task": build_branch_single_task,
     "multi-task-base": build_multi_task_base,
@@ -630,6 +1054,16 @@ BUILDERS = {
     "response-refute-round-2": build_refute_round,
     # Round 1 with a RESPONSE clause: the clause names no OPEN finding, so it changes nothing.
     "response-round-1": build_branch_single_task,
+    "docs-only-readme": build_docs_only_readme,
+    "docs-agent-read": build_docs_agent_read,
+    "docs-readme-read": build_docs_readme_read,
+    "docs-profile-path": build_docs_profile_path,
+    "docs-mention-only": build_docs_mention_only,
+    "docs-script": build_docs_script,
+    "docs-makefile": build_docs_makefile,
+    "docs-requirements": build_docs_requirements,
+    "docs-jekyll": build_docs_jekyll,
+    "docs-include": build_docs_include,
 }
 
 if __name__ == "__main__":

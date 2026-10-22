@@ -196,7 +196,8 @@ When the working tree is not at the head, run it in a detached worktree in the s
 `git worktree add --detach <scratchpad>/<repo>-pr<n> <head>`.
 Remove the worktree, and the `refs/pr/<n>` ref from Step 1, when the run ends. Record the command, the pass count, the fail count, and
 the skip count in `## Inspected`. When you cannot find a command, record that in `## Notes` and
-lower the review confidence to MEDIUM at most. A failing test that the diff causes is a `must`
+lower the review confidence to MEDIUM at most, unless the change is docs only under
+`references/finding-conventions.md` § Docs only. A failing test that the diff causes is a `must`
 finding in category `TST`.
 
 ### Step 6. Build and verify the review map
