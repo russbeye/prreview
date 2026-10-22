@@ -16,7 +16,7 @@ record in the same task folder.
 - **Findings you can act on.** Each finding gives the file and line, the evidence, what goes wrong,
   and the fix that closes it.
 - **A test run.** Claude finds your test command and runs it once on the commit it reviews. If
-  Claude finds no test command, the review says so and its confidence goes down.
+  there is none, the review says so, and its confidence goes down unless the change is docs only.
 - **A record that lasts.** Each review round is a file in your repository. On a second round,
   Claude says which earlier findings closed and which stay open.
 - **No surprise changes.** prreview does not edit your code and does not post to GitHub. It writes
@@ -245,7 +245,7 @@ review file that line 2 names. Then:
   finding.
 - APPROVE below HIGH confidence, and the only reason is that the tests did not run: stop. Tell me
   the reason from the Tests row under Inspected. A round whose tests did not run cannot reach
-  HIGH.
+  HIGH, unless the change is docs only.
 - APPROVE below HIGH confidence for any other reason: read the Confidence basis, fix what lowered
   it, commit, push, and run the next round.
 Never write a ledger line in the audit log. Only I accept a risk.
