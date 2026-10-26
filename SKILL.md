@@ -156,7 +156,7 @@ this skill never creates one outside a task.
 ### Step 3. Open the review file
 
 Count the existing `pr-review-*.md` files in the task directory. The round `k` is that count plus
-one. Create:
+one. The file name is:
 
 ```
 .adp/<task>/pr-review-PR<n>-<YYYYMMDD>-r<k>.md      # PR mode
@@ -164,9 +164,10 @@ one. Create:
 ```
 
 Read `references/review-file-template.md` with a Read call in the same message as the Step 4
-reads: the audit log, the earlier review files, and the guidance files. Then write the title and
-the `## Review Target` block from the template. Append every later section the moment it exists,
-as ADP writes its audit log. Never rewrite an earlier section of this file.
+reads: the audit log, the earlier review files, and the guidance files. Do not create the file
+yet. Build each section in your working notes the moment it exists, and Step 8 writes the whole
+file with one Write call. Each extra write is a turn that re-reads the full context, so the file
+costs one turn, not one turn per section.
 
 ### Step 4. Load the review context
 
@@ -222,8 +223,8 @@ Write one `## Quality Coverage` row per criterion and changed surface that shape
 
 Classify each verified candidate with `references/finding-conventions.md`. Give it the next id in
 its category across the whole task directory: grep `### \[PR-<CAT>-` in every `pr-review-*.md`
-of the task, take the highest number, and add one. Append each finding to `## Findings` as soon as
-it is verified.
+of the task, take the highest number, and add one. Add each finding to `## Findings` in your
+working notes as soon as it is verified.
 
 Run the command in the **Verification** field, and read its output, before you write the finding.
 Then write the claim to match that output exactly. Never write a claim first and fit the evidence
@@ -264,11 +265,16 @@ On a re-review, also do these things:
 
 ### Step 8. Close the review and link it
 
-1. Append `## Notes`, then `## Review Verdict`. The verdict rule is in
-   `references/finding-conventions.md`.
-2. Append the pointer section to the task's `audit-log.md`. Use the exact form in
-   `references/review-file-template.md`. The heading starts with `Review findings`, so the ADP
-   viewer gives the section the `review` kind and places it after the chain.
+1. Finish `## Notes`, then `## Review Verdict`, in your working notes. The verdict rule is in
+   `references/finding-conventions.md`. Check every section against the template before you
+   write, so that no repair turn follows.
+2. In one message, make two tool calls. Write the whole review file with one Write call, every
+   section in template order. Append the pointer section to the task's `audit-log.md` with the
+   other call. Use the exact pointer form in `references/review-file-template.md`. The heading
+   starts with `Review findings`, so the ADP viewer gives the section the `review` kind and places
+   it after the chain.
+3. When the written file still needs a fix, make it with one Edit of the smallest span. Never
+   write the whole file a second time.
 
 ### Step 9. Report
 

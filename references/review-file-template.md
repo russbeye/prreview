@@ -121,6 +121,12 @@ reader parses it.
 - **Evidence** quotes the code exactly in a code span. A line number is an advisory hint, as in
   ADP's `Implemented at` column.
 - **Refs** quotes Pre-Mortem failure-mode text verbatim, so a reader can search for it.
+- `## Notes` holds only what no other section records. A Notes line never repeats an `## Inspected`
+  row, a `## Quality Coverage` row, or a finding. Notes keeps: a review limitation, an unavailable
+  material, a boundary you cleared that no Quality Coverage row names, a candidate that a later
+  record resolves, an acceptance that names no person, a RESPONSE clause that names no OPEN
+  finding or that arrives in round 1, a missing test command, and each docs-only grep hit outside
+  a candidate with its class.
 - **Counts** in the Review Verdict counts the findings OPEN after this round: the round's new
   findings plus the findings it carries open. See `finding-conventions.md` § "Verdict".
 
