@@ -78,7 +78,7 @@ reader parses it.
 |---------|----------|---------|
 | PR-<CAT>-<NNN> | <the RESPONSE text, verbatim> | REFUTED / SUPERSEDED by PR-<CAT>-<NNN> / CARRIED — <the reason> |
 
-[omit the section when the round received no RESPONSE clause]
+[omit the section in round 1, which records each clause in `## Notes`, and when the round received no RESPONSE clause]
 
 ## Prior Findings
 - **PR-<CAT>-<NNN> CLOSED <YYYY-MM-DD> → RESOLVED.** <what in the current head resolves it>
