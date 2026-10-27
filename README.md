@@ -324,6 +324,9 @@ export PRREVIEW_MARKERS='⟦sc:[^⟧]*⟧
 ⟦lc:[^⟧]*⟧'
 ```
 
+Run `python3 evals/test_grade.py` to test the grader's marker handling. The test needs no eval
+runs and does not read `PRREVIEW_MARKERS`.
+
 ## License
 
 GNU General Public License v3.0. See [LICENSE.md](LICENSE.md).
