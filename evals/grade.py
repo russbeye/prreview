@@ -3,6 +3,10 @@
 
 Usage: grade.py <iteration-dir>
 
+Set PRREVIEW_MARKERS to the session-marker lines your setup ends every reply
+with, one regular expression per line. We ignore the reply's last line only
+when one pattern matches all of it. With the variable unset, we ignore nothing.
+
 Each check is code, not judgment, so a rerun grades the same output the same
 way. Content checks look for the seeded defect by its distinctive tokens, and
 the evidence string quotes what matched so a human can confirm it in the viewer.
@@ -19,7 +23,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PARSER = os.path.expanduser("~/.claude/skills/auditable-dev-protocol/scripts/adp-parser-lib.js")
 REQUIRED = ["Severity", "Category", "Location", "Claim", "Evidence", "Failure scenario", "Suggested fix",
             "Confidence", "Confidence basis", "Verification", "Criterion", "Refs", "Created", "Status"]
-MARKER = re.compile(r"^\s*⟦sc:[^⟧]*⟧\s*$")
+MARKERS = [re.compile(p.strip()) for p in os.environ.get("PRREVIEW_MARKERS", "").splitlines() if p.strip()]
 LEDGER = re.compile(r"^- \*\*(PR-[A-Z]+-\d{3}) CLOSED (\d{4}-\d{2}-\d{2}) → (RESOLVED|REFUTED|ACCEPTED)\.\*\*", re.M)
 
 PARSE_JS = r"""
@@ -44,7 +48,7 @@ def parse_review(path):
 def terminal_lines(run):
     text = open(os.path.join(run, "outputs", "terminal.txt"), encoding="utf-8").read()
     lines = [l for l in text.strip().splitlines() if l.strip()]
-    marker = bool(lines) and bool(MARKER.match(lines[-1]))
+    marker = bool(lines) and any(m.fullmatch(lines[-1].strip()) for m in MARKERS)
     if marker:
         lines = lines[:-1]
     return text, lines, marker

@@ -101,6 +101,9 @@ If a finding needs a decision from you, the first line ends with `Needs develope
 finding ids. The first line is 250 characters or fewer. The second line is the path to the review
 file.
 
+If your own setup requires a line on every reply, for example a session marker, that line may
+follow the two lines. It is not part of the report.
+
 ### Verdict
 
 | Verdict | When you get it |
@@ -310,6 +313,19 @@ after you agree.
 
 The `evals/` folder holds the test cases for the skill itself. They need the ADP skill and the
 skill-creator skill. You do not need them to use prreview.
+
+If your setup ends every reply with a session marker, set `PRREVIEW_MARKERS` before you run
+`evals/grade.py`. Put one regular expression on each line. The grader ignores the last line of a
+reply only when one pattern matches that whole line. When the variable is unset or empty, the
+grader ignores no line, and a marker line fails the terminal checks. For example:
+
+```bash
+export PRREVIEW_MARKERS='⟦sc:[^⟧]*⟧
+⟦lc:[^⟧]*⟧'
+```
+
+Run `python3 evals/test_grade.py` to test the grader's marker handling. The test needs no eval
+runs and does not read `PRREVIEW_MARKERS`.
 
 ## License
 
