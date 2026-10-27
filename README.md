@@ -325,7 +325,8 @@ export PRREVIEW_MARKERS='⟦sc:[^⟧]*⟧
 ```
 
 Run `python3 evals/test_grade.py` to test the grader's marker handling. The test needs no eval
-runs and does not read `PRREVIEW_MARKERS`.
+runs and sets its own patterns, but an invalid `PRREVIEW_MARKERS` in your shell stops it when it
+imports the grader.
 
 ## License
 
